@@ -155,7 +155,7 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:8000',
     'http://localhost:3000',
     'http://192.168.43.102:3000'
-    'http://gaschek.herokuapp.com'
+    'https://gaschek.herokuapp.com'
 ]
 
 # CORS_ALLOWED_ORIGINS_ALL = True
