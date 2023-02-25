@@ -26,7 +26,7 @@ class GasDealerOrdersConsumer(WebsocketConsumer):
                     gas_dealer=gas_dealer)
                 pending = Gas_orders.objects.filter(
                     gas_dealer=gas_dealer, confirmed=False)
-                serializer = Order_Serializer(orders)
+                serializer = Order_Serializer(orders, many=True)
 
                 self.send(json.dumps({
                     'message': serializer.data,
