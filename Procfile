@@ -1,1 +1,1 @@
-web: python manage.py runserver
+web: daphne gaschek_backend.asgi:application
