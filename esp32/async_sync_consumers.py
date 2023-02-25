@@ -52,7 +52,7 @@ class ToggleGasDetailsConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         client_data = json.loads(text_data)
-
+        
         if (client_data["action"] == 'alarm'):
             try:
                 payload = jwt_decoder(client_data['gaschek'])
