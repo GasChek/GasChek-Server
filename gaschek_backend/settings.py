@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SERVER_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'gaschek.herokuapp.com']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -56,10 +56,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.gzip.GZipMiddleware',
-    'django.middleware.cache.UpdateCacheMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.cache.FetchFromCacheMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -196,8 +192,7 @@ REDIS_DB = 0
 #     }
 # }
 
-prod_db  =  dj_database_url.config(conn_max_age=500)
-DATABASES['default'].update(prod_db)
+
 
 # List of modules to import when celery starts.
 # CELERY_IMPORTS = (
@@ -217,3 +212,6 @@ STATICFILES_DIRS = (
 
 #  Add configuration for static files storage using whitenoise
 STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
+
+prod_db  =  dj_database_url.config(conn_max_age=500)
+DATABASES['default'].update(prod_db)
