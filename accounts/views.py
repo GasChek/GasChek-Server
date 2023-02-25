@@ -152,7 +152,7 @@ class UpdateUserAPI(APIView):
             user.email = request.data.get('email', user.email)
             user.firstname = request.data.get('firstname', user.firstname)
             user.lastname = request.data.get('lastname', user.lastname)
-            # user.country_code = request.data.get('country_code', user.country_code)
+            user.country_code = request.data.get('country_code', user.country_code)
             user.phonenumber_ordering = request.data.get(
                 'phonenumber_ordering', user.phonenumber_ordering)
             user.phonenumber_gaschek_device_1 = request.data.get(
