@@ -23,7 +23,7 @@ class GasDealerOrdersConsumer(WebsocketConsumer):
                 user = User.objects.get(id=payload['id'])
                 gas_dealer = Gas_Dealer.objects.get(user=user)
                 orders = Gas_orders.objects.filter(
-                    gas_dealer=gas_dealer).latest('id')
+                    gas_dealer=gas_dealer)
                 pending = Gas_orders.objects.filter(
                     gas_dealer=gas_dealer, confirmed=False)
                 serializer = Order_Serializer(orders)
