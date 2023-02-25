@@ -1,1 +1,1 @@
-web: python manage.py runserver https://gaschek.herokuapap.com
+web: python manage.py runserver https://gaschek.herokuaapp.com
