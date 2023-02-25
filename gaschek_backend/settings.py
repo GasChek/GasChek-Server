@@ -32,6 +32,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['gaschek.herokuapp.com']
 
+CSRF_TRUSTED_ORIGINS = ['https://gaschek.herokuapp.com']
+
 # Application definition
 INSTALLED_APPS = [
     'celery',
