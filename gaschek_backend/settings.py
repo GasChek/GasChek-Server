@@ -160,8 +160,9 @@ CORS_ALLOWED_ORIGINS = [
     'https://gaschek.herokuapp.com',
     'https://gaschek.netlify.app'
 ]
-
-# CORS_ALLOWED_ORIGINS_ALL = True
+CORS_ORIGIN_WHITELIST = [
+    'https://gaschek.netlify.app',
+]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
