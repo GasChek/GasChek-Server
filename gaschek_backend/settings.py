@@ -28,11 +28,9 @@ load_dotenv()
 SECRET_KEY = os.getenv('SERVER_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
-
-CSRF_TRUSTED_ORIGINS = ['https://gaschek.herokuapp.com']
 
 # Application definition
 INSTALLED_APPS = [
@@ -153,10 +151,9 @@ REST_FRAMEWORK = {
     )
 }
 
+CSRF_TRUSTED_ORIGINS = ['https://gaschek.herokuapp.com']
+
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:8000',
-    'http://localhost:3000',
-    'http://192.168.43.102:3000',
     'https://gaschek.herokuapp.com',
     'https://gaschek.netlify.app'
 ]
@@ -172,11 +169,14 @@ EMAIL_HOST_USER = 'gaschektechnology@gmail.com'
 EMAIL_HOST_PASSWORD = 'wpjzmukkuxrrgmcn'
 EMAIL_USE_SSL = True
 
+prod_db  =  dj_database_url.config(conn_max_age=500)
+DATABASES['default'].update(prod_db)
+
 
 # REDIS CONFIGURATIONS
-REDIS_HOST = 'localhost'
-REDIS_PORT = 6379
-REDIS_DB = 0
+# REDIS_HOST = 'localhost'
+# REDIS_PORT = 6379
+# REDIS_DB = 0
 
 # Configure Django to use Redis as a message broker
 # CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'
@@ -217,5 +217,3 @@ REDIS_DB = 0
 # #  Add configuration for static files storage using whitenoise
 # STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
 
-prod_db  =  dj_database_url.config(conn_max_age=500)
-DATABASES['default'].update(prod_db)
