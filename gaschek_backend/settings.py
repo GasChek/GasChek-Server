@@ -96,9 +96,9 @@ ASGI_APPLICATION = 'gaschek_backend.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'gaschek_database',
+        'NAME': os.getenv('DATABASE_NAME'),
         'USER': 'postgres',
-        'PASSWORD': 'daddyandmummy',
+        'PASSWORD': os.getenv('DATABASE_PASSWORD'),
         'HOST': 'localhost',
     }
 }
@@ -154,11 +154,14 @@ REST_FRAMEWORK = {
 }
 
 CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8000',
+    'http://localhost:3000',
     'https://gaschek.herokuapp.com',
     'https://gaschek.netlify.app'
 ]
 CORS_ORIGIN_WHITELIST = [
     'https://gaschek.netlify.app',
+    'http://localhost:3000'
 ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

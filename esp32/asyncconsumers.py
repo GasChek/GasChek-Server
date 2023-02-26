@@ -7,6 +7,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.db.models.signals import post_save
 from functions.encryption import jwt_decoder
 from asgiref.sync import sync_to_async
+from django.dispatch import receiver
 
 
 class GasDetailsConsumer(AsyncWebsocketConsumer):
@@ -20,7 +21,8 @@ class GasDetailsConsumer(AsyncWebsocketConsumer):
         client_data = json.loads(text_data)
 
         if client_data["action"] == 'connect':
-            async def send_data():
+            @receiver(post_save, sender=Gaschek_Device, weak=False)
+            async def send_data(**kwargs):
                 try:
                     payload = jwt_decoder(client_data['gaschek'])
                     data = await sync_to_async(Gaschek_Device.objects.get)(user=payload['id'])
@@ -36,10 +38,10 @@ class GasDetailsConsumer(AsyncWebsocketConsumer):
             
             await send_data()
 
-            async def give_data(**kwargs):
-                await send_data()
+            # async def give_data(**kwargs):
+            #     await send_data()
 
-            post_save.connect(give_data, sender=Gaschek_Device)
+            # post_save.connect(give_data, sender=Gaschek_Device)
 
         if (client_data["action"] == 'alarm'):
             try:

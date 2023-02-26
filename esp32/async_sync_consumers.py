@@ -21,8 +21,7 @@ class GasDetailsConsumer(WebsocketConsumer):
         client_data = json.loads(text_data)
 
         if client_data["action"] == 'connect':
-            @receiver(post_save, sender=Gaschek_Device)
-            def send_data(**kwargs):
+            def send_data():
                 try:
                     payload = jwt_decoder(client_data['gaschek'])
                     data = Gaschek_Device.objects.get(user=payload['id'])
@@ -38,10 +37,10 @@ class GasDetailsConsumer(WebsocketConsumer):
             
             send_data()
 
-            # def give_data(**kwargs):
-            #     send_data()
+            def give_data(**kwargs):
+                send_data()
 
-            # post_save.connect(give_data, sender=Gaschek_Device)        
+            post_save.connect(give_data, sender=Gaschek_Device, weak=False)        
 
 class ToggleGasDetailsConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -145,7 +144,7 @@ class GasDetailsDeviceConsumer(WebsocketConsumer):
             def give_data(**kwargs):
                 send_data()
 
-            post_save.connect(give_data, sender=Gaschek_Device)
+            post_save.connect(give_data, sender=Gaschek_Device, weak=False)
 
 class SendDeviceDetailsConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -210,4 +209,4 @@ class GasLeakageNotificationConsumer(WebsocketConsumer):
             def give_data(**kwargs):
                 send_data()
 
-            post_save.connect(give_data, sender=Gas_Leakage)
+            post_save.connect(give_data, sender=Gas_Leakage, weak=False)

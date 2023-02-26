@@ -43,4 +43,4 @@ class GasDealerOrdersConsumer(WebsocketConsumer):
 
         def give_data(**kwargs):
             send_data()
-        post_save.connect(give_data, sender=Gas_orders)
+        post_save.connect(give_data, sender=Gas_orders, weak=False)

@@ -40,7 +40,7 @@ class GasDetailsConsumer(WebsocketConsumer):
             def give_data(**kwargs):
                 send_data()
 
-            post_save.connect(give_data, sender=Gaschek_Device)
+            post_save.connect(give_data, sender=Gaschek_Device, weak=False)
 
         if (client_data["action"] == 'alarm'):
             try:
@@ -133,7 +133,7 @@ class GasDetailsDeviceConsumer(WebsocketConsumer):
             def give_data(**kwargs):
                 send_data()
 
-            post_save.connect(give_data, sender=Gaschek_Device)
+            post_save.connect(give_data, sender=Gaschek_Device, weak=False)
 
 class SendDeviceDetailsConsumer(WebsocketConsumer):
     def connect(self):
@@ -198,4 +198,4 @@ class GasLeakageNotificationConsumer(WebsocketConsumer):
             def give_data(**kwargs):
                 send_data()
 
-            post_save.connect(give_data, sender=Gas_Leakage)
+            post_save.connect(give_data, sender=Gas_Leakage, weak=False)
