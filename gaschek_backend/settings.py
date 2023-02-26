@@ -28,9 +28,11 @@ load_dotenv()
 SECRET_KEY = os.getenv('SERVER_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+
+CSRF_TRUSTED_ORIGINS = ['https://gaschek.herokuapp.com']
 
 # Application definition
 INSTALLED_APPS = [
@@ -151,16 +153,16 @@ REST_FRAMEWORK = {
     )
 }
 
-CSRF_TRUSTED_ORIGINS = ['https://gaschek.herokuapp.com']
-
 CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8000',
+    'http://localhost:3000',
+    'http://192.168.43.102:3000',
     'https://gaschek.herokuapp.com',
     'https://gaschek.netlify.app'
 ]
-# CORS_ORIGIN_WHITELIST = [
-#     'https://gaschek.netlify.app',
-# ]
-
+CORS_ORIGIN_WHITELIST = [
+    'https://gaschek.netlify.app',
+]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
