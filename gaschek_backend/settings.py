@@ -160,7 +160,7 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ORIGIN_WHITELIST = [
     'https://gaschek.netlify.app',
 ]
-CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+CORS_ALLOW_METHODS = ['GET', 'POST', 'PATCH', 'OPTIONS']
 CORS_ALLOW_HEADERS = ['Content-Type', 'Authorization']
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
