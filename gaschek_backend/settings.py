@@ -154,14 +154,11 @@ REST_FRAMEWORK = {
 }
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:8000',
-    'http://localhost:3000',
     'https://gaschek.herokuapp.com',
     'https://gaschek.netlify.app'
 ]
 CORS_ORIGIN_WHITELIST = [
     'https://gaschek.netlify.app',
-    'http://localhost:3000'
 ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
