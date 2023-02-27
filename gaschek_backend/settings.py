@@ -154,8 +154,6 @@ REST_FRAMEWORK = {
 }
 
 CORS_ALLOWED_ORIGINS = [
-    # 'http://localhost:3000',
-    # 'http://localhost:8000',
     'https://gaschek.herokuapp.com',
     'https://gaschek.netlify.app'
 ]

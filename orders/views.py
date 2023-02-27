@@ -1,5 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.pagination import LimitOffsetPagination
 from accounts.models import User, Gas_Dealer
 from accounts.serializers import GasDealerSearchSerializer
 from .models import Cylinder_Price, Gas_orders, Delivery_Fee
@@ -177,7 +178,7 @@ class Get_Delivery_Fee(APIView):
             })
 
 
-class Get_orders(APIView):
+class Get_orders(APIView, LimitOffsetPagination):
     def post(self, request):
         try:
             payload = jwt_decoder(request.data['token'])
@@ -199,13 +200,12 @@ class Get_orders(APIView):
             else:
                 orders = Gas_orders.objects.filter(
                     user=user).order_by('created_at').reverse()
-                serializer = Order_Serializer(orders, many=True)
-                return Response({
-                    'status': 200,
-                    'data': serializer.data
-                })
-
-        except Exception:
+                results = self.paginate_queryset(orders, request, view=self)
+                serializer = Order_Serializer(results, many=True)
+                return self.get_paginated_response(serializer.data)
+                    
+        except Exception as e:
+            print(e)
             return Response({
                 'status': 400,
             })
