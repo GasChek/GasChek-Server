@@ -7,6 +7,8 @@ from accounts.models import Gaschek_Device
 from accounts.models import User
 from .models import Gas_Leakage
 from functions.encryption import jwt_decoder
+from rest_framework.pagination import LimitOffsetPagination
+
 
 # Create your views here.
 
@@ -74,7 +76,7 @@ class Get_gaschek_details(APIView):
         })
 
 
-class Report_gas_leakage(APIView):
+class Report_gas_leakage(APIView, LimitOffsetPagination):
     def post(self, request):
         user = User.objects.get(id=request.data['user_id'])
 
@@ -92,25 +94,29 @@ class Report_gas_leakage(APIView):
         })
 
     def get(self, request):
-        payload = jwt_decoder(request.query_params['token'])
-        user = User.objects.get(id=payload['id'])
+        try:
+            payload = jwt_decoder(request.query_params['token'])
+            user = User.objects.get(id=payload['id'])
 
-        if not user:
+            if not user:
+                return Response({
+                    "status": 400,
+                    "message": "Invalid user"
+                })
+
+            gaschek_device = Gaschek_Device.objects.get(user=user)
+            gas_leakage = Gas_Leakage.objects.filter(
+                gaschek_device=gaschek_device).order_by('created_at').reverse()
+
+
+            results = self.paginate_queryset(gas_leakage, request, view=self)
+            serializer = Gas_Leakage_Serializer(results, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        except Exception:
             return Response({
                 "status": 400,
-                "message": "Invalid user"
             })
-
-        gaschek_device = Gaschek_Device.objects.get(user=user)
-        gas_leakage = Gas_Leakage.objects.filter(
-            gaschek_device=gaschek_device).order_by('created_at').reverse()
-
-        serialzer = Gas_Leakage_Serializer(gas_leakage, many=True)
-
-        return Response({
-            'status': 200,
-            'data': serialzer.data
-        })
 
 
 class Get_Leakage_Notification_Details(APIView):

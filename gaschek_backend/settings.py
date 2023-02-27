@@ -150,10 +150,14 @@ AUTH_USER_MODEL = "accounts.User"
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework_api_key.permissions.HasAPIKey',
-    )
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 22
 }
 
 CORS_ALLOWED_ORIGINS = [
+    # 'http://localhost:3000',
+    # 'http://localhost:8000',
     'https://gaschek.herokuapp.com',
     'https://gaschek.netlify.app'
 ]
