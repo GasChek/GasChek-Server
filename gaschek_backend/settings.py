@@ -32,8 +32,6 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
-CSRF_TRUSTED_ORIGINS = ['https://gaschek.herokuapp.com']
-
 # Application definition
 INSTALLED_APPS = [
     'celery',
@@ -164,6 +162,8 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ORIGIN_WHITELIST = [
     'https://gaschek.netlify.app',
 ]
+CSRF_TRUSTED_ORIGINS = ['https://gaschek.herokuapp.com']
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
