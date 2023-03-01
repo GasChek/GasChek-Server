@@ -188,12 +188,15 @@ class Get_orders(APIView, LimitOffsetPagination):
                 gas_dealer = Gas_Dealer.objects.get(user=user)
                 orders = Gas_orders.objects.filter(
                     gas_dealer=gas_dealer).order_by('created_at').reverse()
-                pending = Gas_orders.objects.filter(
-                    gas_dealer=gas_dealer, confirmed=False)
+                user_pending = Gas_orders.objects.filter(
+                    gas_dealer=gas_dealer, user_confirmed=False, dealer_confirmed=True)
+                dealer_pending = Gas_orders.objects.filter(
+                    gas_dealer=gas_dealer, dealer_confirmed=False)
                 serializer = Order_Serializer(orders, many=True)
                 return Response({
                     'status': 200,
-                    'pending': len(pending),
+                    'user_pending': len(user_pending),
+                    'dealer_pending': len(dealer_pending),
                     'data': serializer.data
                 })
 
@@ -228,21 +231,33 @@ class GasDealer_SearchAPI(APIView):
                 'status': 400,
             })
 
+
 class Confirm_OrderAPI(APIView):
     def post(self, request):
         try:
             payload = jwt_decoder(request.data['token'])
             user = User.objects.get(id=payload['id'])
-            gas_dealer = Gas_Dealer.objects.get(user=user)
 
-            order = Gas_orders.objects.get(
-                id=request.data['id'], gas_dealer=gas_dealer)
-            order.confirmed = True
-            order.save()
+            if(request.data['user_type'] == "dealer"):
+                gas_dealer = Gas_Dealer.objects.get(user=user)
+                order = Gas_orders.objects.get(
+                    id=request.data['id'], gas_dealer=gas_dealer)
+                order.dealer_confirmed = True
+                order.save()
 
-            return Response({
-                'status': 200
-            })
+                return Response({
+                    'status': 200
+                })
+            else:
+                order = Gas_orders.objects.get(
+                    id=request.data['id'], user=user)
+                order.user_confirmed = True
+                order.save()
+
+                return Response({
+                    'status': 200
+                })
+
         except Exception:
             return Response({
                 'status': 400,

@@ -24,13 +24,16 @@ class GasDealerOrdersConsumer(WebsocketConsumer):
                 gas_dealer = Gas_Dealer.objects.get(user=user)
                 orders = Gas_orders.objects.filter(
                     gas_dealer=gas_dealer).order_by('created_at').reverse()
-                pending = Gas_orders.objects.filter(
-                    gas_dealer=gas_dealer, confirmed=False)
+                user_pending = Gas_orders.objects.filter(
+                    gas_dealer=gas_dealer, user_confirmed=False, dealer_confirmed=True)
+                dealer_pending = Gas_orders.objects.filter(
+                    gas_dealer=gas_dealer, dealer_confirmed=False)
                 serializer = Order_Serializer(orders, many=True)
 
                 self.send(json.dumps({
                     'message': serializer.data,
-                    'pending': len(pending),
+                    'user_pending': len(user_pending),
+                    'dealer_pending': len(dealer_pending),
                 }))
             except Gas_orders.DoesNotExist:
                 self.send(json.dumps({

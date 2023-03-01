@@ -18,7 +18,8 @@ class Order_Serializer(serializers.ModelSerializer):
     class Meta:
         model = Gas_orders
         fields = ['id', 'cylinder', 'price', 'delivery', 'firstname', 'lastname',
-                  'address', 'phonenumber', 'company_name', 'created_at', 'confirmed']
+                  'address', 'phonenumber', 'company_name', 'created_at', 'dealer_confirmed',
+                  'user_confirmed']
 
 
 class Delivery_Fee_Serializer(serializers.ModelSerializer):

@@ -11,7 +11,8 @@ class Gas_orders(models.Model):
     price = models.IntegerField()
     delivery = models.IntegerField()
     reference = models.CharField(max_length=50)
-    confirmed = models.BooleanField(default=False)
+    dealer_confirmed = models.BooleanField(default=False)
+    user_confirmed = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['user']
@@ -30,7 +31,6 @@ class Cylinder_Price(models.Model):
 
     def __str__(self):
         return "{} {}kg NGN {}".format(self.gas_dealer, self.cylinder, self.price)
-
 
 class Delivery_Fee(models.Model):
     gas_dealer = models.ForeignKey(Gas_Dealer, on_delete=models.CASCADE)

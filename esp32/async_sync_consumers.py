@@ -5,7 +5,6 @@ from accounts.models import Gaschek_Device, User
 from .models import Gas_Leakage
 from channels.generic.websocket import AsyncWebsocketConsumer, WebsocketConsumer
 from django.db.models.signals import post_save
-from django.dispatch import receiver
 from functions.encryption import jwt_decoder
 from asgiref.sync import sync_to_async
 
