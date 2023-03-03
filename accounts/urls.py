@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (CreateUserAPI, LoginAPI,
                     UserViewAPI, UpdateUserAPI,
                     AccountViewAPI, CreateGasDealerAPI,
-                    Verify_Otp, Dealer_LoginAPI,
+                    Verify_Otp, Resend_Otp, Dealer_LoginAPI,
                     GasDealerViewAPI, GetGasDealerAPI,
                     Update_GasDealer_details)
 
@@ -15,6 +15,7 @@ urlpatterns = [
 
     path('create_dealer/', CreateGasDealerAPI.as_view()),
     path('otp/', Verify_Otp.as_view()),
+    path('resend-otp/', Resend_Otp.as_view()),
     path('dealer_login/', Dealer_LoginAPI.as_view()),
     path('get_dealer/', GetGasDealerAPI.as_view()),
     path('get_dealer_view/', GasDealerViewAPI.as_view()),

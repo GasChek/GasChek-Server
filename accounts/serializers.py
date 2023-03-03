@@ -30,7 +30,7 @@ class GasDealerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Gas_Dealer
         fields = ['id', 'user', 'company_name',
-                  'location', 'selling', 'open', 'state']
+                  'longitude', 'latitude', 'selling', 'open', 'state']
 
 
 class GasDealerSearchSerializer(serializers.ModelSerializer):

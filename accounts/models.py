@@ -107,10 +107,7 @@ class Gaschek_Device(models.Model):
 class Gas_Dealer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     company_name = models.CharField(max_length=50)
-    location = models.CharField(max_length=500)
-    address = models.CharField(max_length=500)
     phonenumber = models.CharField(max_length=15, unique=True)
-    account_number = models.CharField(max_length=30)
     state = models.CharField(max_length=25)
     rating = models.CharField(max_length=10)
     users_rate_count = models.CharField(max_length=10000)
@@ -120,6 +117,26 @@ class Gas_Dealer(models.Model):
     selling = models.BooleanField(default=True)
     open = models.BooleanField(default=False)
     sold = models.BigIntegerField(default=0)
+    #LOCATION
+    longitude = models.CharField(max_length=500)
+    latitude = models.CharField(max_length=500)
+    address = models.CharField(max_length=500)
+    #SUBACOUNT
+    account_number = models.CharField(max_length=30)
+    bank_name = models.CharField(max_length=50)
+    bank_code = models.CharField(max_length=5)
+    percentage_charge = models.DecimalField(blank=True, decimal_places=1, max_digits=4)
+    subaccount_code = models.CharField(max_length=100, blank=True)
+    subaccount_id = models.BigIntegerField(blank=True)
+
+    def __str__(self):
+        return self.company_name
+
+class Abandoned_Subaccounts(models.Model):
+    company_name = models.CharField(max_length=50)
+    #SUBACOUNT
+    subaccount_code = models.CharField(max_length=100, blank=True)
+    subaccount_id = models.BigIntegerField(blank=True)
 
     def __str__(self):
         return self.company_name

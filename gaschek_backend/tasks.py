@@ -1,15 +1,18 @@
 # from __future__ import absolute_import
-# from functions.encryption import jwt_decoder
-# from accounts.models import Gaschek_Device
-# from esp32.serializers import Gaschek_Device_Serializer
-# #from proj.celery import app
+# from management.commands.delete_inactive_models import Command
+# from datetime import timedelta
 # from celery import shared_task
-
-# @shared_task
-# def send(client_data):
-#     payload = jwt_decoder(client_data['gaschek'])
-
-#     return payload
- 
+# from accounts.models import User, Gas_Dealer
 
 
+# @shared_task()
+# def delete_inactive_models():
+#     inactive_models = User.objects.filter(is_verified=False)
+#     for model in inactive_models:
+#         dealer = Gas_Dealer.objects.filter(user=model).first()
+
+#         if dealer:
+#             dealer.delete()
+#         model.delete()
+
+# delete_inactive_models.delay()

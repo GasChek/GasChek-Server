@@ -4,7 +4,7 @@ from .serializers import (LogInSerializer,
                           DealerLogInSerializer,
                           UserSerializer,
                           GasDealerSerializer)
-from .models import User, Gas_Dealer, Token
+from .models import User, Gas_Dealer, Token, Abandoned_Subaccounts
 from orders.models import Cylinder_Price, Delivery_Fee
 from orders.serializers import (Cylinder_Price_Serializer,
                                 Delivery_Fee_Serializer)
@@ -14,6 +14,7 @@ import datetime
 from django.contrib.auth.models import update_last_login
 from functions.emails import HandleEmail
 from functions.encryption import jwt_decoder, encrypt
+from external_api.paystack import create_subaccount, update_subaccount
 import os
 from dotenv import load_dotenv
 
@@ -42,8 +43,6 @@ class CreateUserAPI(APIView):
         })
 
 # CHECK IF ACCOUNT IS USER OR GAS DEALER
-
-
 class AccountViewAPI(APIView):
     def get(self, request):
         try:
@@ -68,8 +67,6 @@ class AccountViewAPI(APIView):
 # CHECK IF ACCOUNT IS USER OR GAS DEALER
 
 # USER
-
-
 class LoginAPI(APIView):
     def post(self, request):
         serializer = LogInSerializer(data=request.data)
@@ -106,7 +103,7 @@ class LoginAPI(APIView):
             return Response({
                 'status': 400,
                 'message': 'Invaild email or password',
-                'data': serializer.errors
+                # 'data': serializer.errors
             })
 
 
@@ -181,48 +178,113 @@ class UpdateUserAPI(APIView):
 # USER
 
 # DEALER
-
-
 class CreateGasDealerAPI(APIView):
     def post(self, request):
+        user = User.objects.filter(email=request.data['email']).first()
+        
+        if user:
+            if user.is_verified is True:
+                return Response({
+                    'status': 400,
+                    'message': 'Email already exists',
+                })
+            else:
+                gas_dealer = Gas_Dealer.objects.filter(
+                    user=user).first()
+                Abandoned_Subaccounts.objects.create(company_name=gas_dealer.company_name,
+                                                    subaccount_code=gas_dealer.subaccount_code,
+                                                    subaccount_id=gas_dealer.subaccount_id)
+                user.delete()
+              
         gas_dealer = Gas_Dealer.objects.filter(
             company_name=request.data['company_name']).first()
+        
+        if gas_dealer:
+            user = User.objects.filter(email=gas_dealer.user.email).first()
+
+            if user.is_verified is True:
+                return Response({
+                    'status': 400,
+                    'message': 'Company name already exists',
+                })
+        
+        gas_dealer = Gas_Dealer.objects.filter(
+            phonenumber=request.data['phonenumber']).first()
+        
+        if gas_dealer:
+            user = User.objects.filter(email=gas_dealer.user.email).first()
+
+            if user.is_verified is True:
+                return Response({
+                    'status': 400,
+                    'message': 'Phonenumber already exists',
+                })
+        
+        gas_dealer = Gas_Dealer.objects.filter(
+            account_number=request.data['account_number']).first()
+        
         if gas_dealer:
             return Response({
-                'status': 500,
-                'message': 'Company name already exists',
-            })
-        gas_dealer_phonenumber = Gas_Dealer.objects.filter(
-            phonenumber=request.data['phonenumber']).first()
-        if gas_dealer_phonenumber:
-            return Response({
-                'status': 500,
-                'message': 'Phonenumber already exists',
+                'status': 400,
+                'message': 'Account Number already exists',
             })
 
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            abandoned_subaccount = Abandoned_Subaccounts.objects.filter(
+                                    company_name=request.data['company_name']).first()
 
-            user = User.objects.get(email=serializer.data['email'])
-            Gas_Dealer.objects.create(user=user,
-                                      company_name=request.data['company_name'],
-                                      state=request.data['state'],
-                                      phonenumber=request.data['phonenumber'],
-                                      address=request.data['address'],
-                                      account_number=request.data['account_number']
-                                      )
-            HandleEmail(user, "create").start()
+            if abandoned_subaccount:
+                response = update_subaccount(abandoned_subaccount.subaccount_code, 
+                                            request.data['company_name'], 
+                                            request.data['bank'], 
+                                            str(request.data['account_number']), 
+                                            )
+                if response['status'] is True:
+                    abandoned_subaccount.delete()
+                
+            else:
+                percentage_charge = 2
+                response = create_subaccount(request.data['company_name'], 
+                                            request.data['bank'], 
+                                            str(request.data['account_number']), 
+                                            percentage_charge)
 
-            return Response({
-                'status': 200,
-                'data': serializer.data['email'],
-            })
+            if response['status'] is True:
+                serializer.save()
+                response = response['data']
+        
+                user = User.objects.get(email=serializer.data['email'])
+                Gas_Dealer.objects.create(user=user,
+                                            company_name=request.data['company_name'],
+                                            state=request.data['state'],
+                                            phonenumber=request.data['phonenumber'],
+                                            address=request.data['address'],
+                                            account_number=request.data['account_number'],
+                                            longitude=request.data['longitude'],
+                                            latitude=request.data['latitude'],
+                                            bank_name=response['settlement_bank'],
+                                            bank_code=request.data['bank'],
+                                            percentage_charge=response['percentage_charge'],
+                                            subaccount_code=response['subaccount_code'],
+                                            subaccount_id=response['id'],
+                                        )
+                HandleEmail(user, "create").start()
 
+                return Response({
+                    'status': 200,
+                    'data': serializer.data['email'],
+                })
+
+            else:
+                return Response({
+                    'status': 500,
+                    'response': response
+                })
+            
         return Response({
             'status': 400,
             'message': 'Something went wrong',
-            'data': serializer.errors
         })
 
 
@@ -256,6 +318,17 @@ class Verify_Otp(APIView):
         })
 
 
+class Resend_Otp(APIView):
+    def post(self, request):
+        user = User.objects.get(email=request.data['email'])
+
+        HandleEmail(user, "update").start()
+
+        return Response({
+            'status': 200,
+        })
+
+    
 class Dealer_LoginAPI(APIView):
     def post(self, request):
         serializer = DealerLogInSerializer(data=request.data)
@@ -266,9 +339,16 @@ class Dealer_LoginAPI(APIView):
 
             user = User.objects.filter(email=email).first()
             if (not user or not user.check_password(password)
-                    or user.is_dealer is False or user.is_verified is False):
+                    or user.is_dealer is False):
                 return Response({
                     'message': 'Invaild email or password'
+                })
+            
+            if user.is_verified is False:
+                HandleEmail(user, "update").start()
+                return Response({
+                    'status': True,
+                    'email': serializer.data['email']
                 })
 
             update_last_login(None, user)

@@ -58,8 +58,9 @@ class PaymentAPI(APIView):
 
         try:
             payment = initialize_payment(str(user.email),
-                                         int(cylinder_price.price +
-                                             fee.price) * 100,
+                                         int(cylinder_price.price),
+                                         int(fee.price),
+                                         str(gas_dealer.subaccount_code),
                                          str(callback_url),
                                          str(cylinder),
                                          str(cylinder_price.gas_dealer))

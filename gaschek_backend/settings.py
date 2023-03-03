@@ -187,7 +187,7 @@ DATABASES['default'].update(prod_db)
 # CELERY_RESULT_SERIALIZER = 'json'
 # CELERY_ACCEPT_CONTENT = ['json', 'yaml']
 
-# # Configure Django to use Redis as a cache backend
+# Configure Django to use Redis as a cache backend
 # CACHES = {
 #     'default': {
 #         'BACKEND': 'django_redis.cache.RedisCache',
@@ -197,9 +197,6 @@ DATABASES['default'].update(prod_db)
 #         }
 #     }
 # }
-
-
-
 # List of modules to import when celery starts.
 # CELERY_IMPORTS = (
 #     'gaschek_backend.tasks',
