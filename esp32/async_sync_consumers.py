@@ -198,12 +198,15 @@ class GasLeakageNotificationConsumer(WebsocketConsumer):
                     leak = Gas_Leakage.objects.filter(gaschek_device=gaschek_device)
 
                     self.send(json.dumps({
+                        'status': 200,
                         'leakages': len(leak)
                     }))
                 except Exception:
                     self.send(json.dumps({
-                        'leakages': 400
-                    }))    
+                        'status': 400,
+                    }))   
+
+            send_data() 
 
             def give_data(**kwargs):
                 send_data()

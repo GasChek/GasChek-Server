@@ -12,68 +12,68 @@ from rest_framework.pagination import LimitOffsetPagination
 
 # Create your views here.
 
+######## UPDATE CYLINDER DETAILS COMING FROM DEVICE TO DATABASE
+# class Update_esp32_details(APIView):
+#     def post(self, request):
+#         try:
+#             user = User.objects.get(id=request.data["user_id"])
 
-class Update_esp32_details(APIView):
-    def post(self, request):
-        try:
-            user = User.objects.get(id=request.data["user_id"])
+#             if not user:
+#                 return Response({
+#                     "status": 400,
+#                     "message": "Invalid user"
+#                 })
 
-            if not user:
-                return Response({
-                    "status": 400,
-                    "message": "Invalid user"
-                })
-
-            if ('cylinder' not in request.data and
-                'gas_mass' not in request.data and
-                'gas_level' not in request.data and
-                'battery_level' not in request.data):
-                return Response({
-                    "status": 400,
-                })
+#             if ('cylinder' not in request.data and
+#                 'gas_mass' not in request.data and
+#                 'gas_level' not in request.data and
+#                 'battery_level' not in request.data):
+#                 return Response({
+#                     "status": 400,
+#                 })
                 
-            gaschek_device = Gaschek_Device.objects.get(user=user)
+#             gaschek_device = Gaschek_Device.objects.get(user=user)
 
-            gaschek_device.cylinder = request.data.get(
-                'cylinder', gaschek_device.cylinder)
-            gaschek_device.gas_mass = request.data.get(
-                'gas_mass', gaschek_device.gas_mass)
-            gaschek_device.gas_level = request.data.get(
-                'gas_level', gaschek_device.gas_level)
-            gaschek_device.battery_level = request.data.get(
-                'battery_level', gaschek_device.battery_level)
-            gaschek_device.save()
+#             gaschek_device.cylinder = request.data.get(
+#                 'cylinder', gaschek_device.cylinder)
+#             gaschek_device.gas_mass = request.data.get(
+#                 'gas_mass', gaschek_device.gas_mass)
+#             gaschek_device.gas_level = request.data.get(
+#                 'gas_level', gaschek_device.gas_level)
+#             gaschek_device.battery_level = request.data.get(
+#                 'battery_level', gaschek_device.battery_level)
+#             gaschek_device.save()
 
-            return Response({
-                'status': 200,
-            })
-        except Exception as e:
-            print(e)
+#             return Response({
+#                 'status': 200,
+#             })
+#         except Exception as e:
+#             print(e)
 
+######## GET CYLINDER DETAILS COMING FROM DATABASE TO DEVICE
+# class Get_gaschek_details(APIView):
+#     def get(self, request):
+#         user = User.objects.get(id=request.query_params['user_id'])
+#         gaschek_device = Gaschek_Device.objects.filter(user=user).first()
 
-class Get_gaschek_details(APIView):
-    def get(self, request):
-        user = User.objects.get(id=request.query_params['user_id'])
-        gaschek_device = Gaschek_Device.objects.filter(user=user).first()
+#         if not gaschek_device:
+#             return Response({
+#                 'status': 400
+#             })
 
-        if not gaschek_device:
-            return Response({
-                'status': 400
-            })
+#         serializer = Gaschek_Get_Serializer(gaschek_device)
+#         serializer2 = UserSerializer(user)
 
-        serializer = Gaschek_Get_Serializer(gaschek_device)
-        serializer2 = UserSerializer(user)
-
-        return Response({
-            'call': serializer.data['call'],
-            'alarm': serializer.data['alarm'],
-            'text': serializer.data['text'],
-            'country_code': serializer2.data['country_code'],
-            'number_one': serializer2.data['phonenumber_ordering'],
-            'number_two': serializer2.data['phonenumber_gaschek_device_1'],
-            'number_three': serializer2.data['phonenumber_gaschek_device_2'],
-            'number_four': serializer2.data['phonenumber_gaschek_device_3']
-        })
+#         return Response({
+#             'call': serializer.data['call'],
+#             'alarm': serializer.data['alarm'],
+#             'text': serializer.data['text'],
+#             'country_code': serializer2.data['country_code'],
+#             'number_one': serializer2.data['phonenumber_ordering'],
+#             'number_two': serializer2.data['phonenumber_gaschek_device_1'],
+#             'number_three': serializer2.data['phonenumber_gaschek_device_2'],
+#             'number_four': serializer2.data['phonenumber_gaschek_device_3']
+#         })
 
 
 class Report_gas_leakage(APIView, LimitOffsetPagination):
@@ -119,22 +119,22 @@ class Report_gas_leakage(APIView, LimitOffsetPagination):
             })
 
 
-class Get_Leakage_Notification_Details(APIView):
-    def get(self, request):
-        try:
-            payload = jwt_decoder(request.query_params['gaschek'])
-            gaschek_device = Gaschek_Device.objects.get(user=payload['id'])
-            leak = Gas_Leakage.objects.filter(gaschek_device=gaschek_device)
+# class Get_Leakage_Notification_Details(APIView):
+#     def get(self, request):
+#         try:
+#             payload = jwt_decoder(request.query_params['gaschek'])
+#             gaschek_device = Gaschek_Device.objects.get(user=payload['id'])
+#             leak = Gas_Leakage.objects.filter(gaschek_device=gaschek_device)
 
-            return Response({
-                'status': 200,
-                'data': len(leak)
-            })
-        except Exception:
-            return Response({
-                'status': 400,
-                'message': 'Unauthenticated'
-            })
+#             return Response({
+#                 'status': 200,
+#                 'data': len(leak)
+#             })
+#         except Exception:
+#             return Response({
+#                 'status': 400,
+#                 'message': 'Unauthenticated'
+#             })
 
 
 # class Reset_GasChek_device(APIView):
