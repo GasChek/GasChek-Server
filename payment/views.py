@@ -7,8 +7,6 @@ from functions.encryption import jwt_decoder
 from external_api.paystack import initialize_payment, verify_payment
 
 # Create your views here.
-
-
 class PaymentAPI(APIView):
     def post(self, request):
         payload = jwt_decoder(request.data['token'])
@@ -64,6 +62,7 @@ class PaymentAPI(APIView):
                                          str(callback_url),
                                          str(cylinder),
                                          str(cylinder_price.gas_dealer))
+            
             if (payment['status'] is True):
                 payment_object = Payment.objects.filter(
                     reference=payment['data']['reference']).first()
@@ -86,7 +85,8 @@ class PaymentAPI(APIView):
                     'status': 400,
                     'message': 'Invalid payment'
                 })
-        except Exception:
+        except Exception as e:
+            print(e)
             return Response({
                 'status': 400,
                 'message': "Error processing payment, try again."

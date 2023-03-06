@@ -9,7 +9,7 @@ from orders.models import Cylinder_Price, Delivery_Fee
 from orders.serializers import (Cylinder_Price_Serializer,
                                 Delivery_Fee_Serializer)
 from rest_framework_api_key.permissions import HasAPIKey
-import jwt
+import jwt, json
 import datetime
 from django.contrib.auth.models import update_last_login
 from functions.emails import HandleEmail
@@ -69,41 +69,48 @@ class AccountViewAPI(APIView):
 # USER
 class LoginAPI(APIView):
     def post(self, request):
-        serializer = LogInSerializer(data=request.data)
+        try:
+            serializer = LogInSerializer(data=request.data)
 
-        if serializer.is_valid():
-            username = serializer.data['username']
-            password = serializer.data['password']
+            if serializer.is_valid():
+                username = serializer.data['username']
+                password = serializer.data['password']
 
-            user = User.objects.filter(usernames=username).first()
+                user = User.objects.filter(usernames=username).first()
 
-            if (not user or not user.check_password(password)
-                    or user.is_dealer is True):
+                if (not user or not user.check_password(password)
+                        or user.is_dealer is True):
+                    return Response({
+                        'status': 400,
+                        'message': 'Invaild username or password'
+                    })
+
+                update_last_login(None, user)
+
+                payload = {
+                    'id': user.id,
+                    'account_type': "user",
+                    'exp': datetime.datetime.utcnow() + datetime.timedelta(days=15),
+                    'iat': datetime.datetime.utcnow()
+                }
+                token = jwt.encode(payload, key=JWT_KEY, algorithm='HS256')
+                encrypt_token = encrypt(token)
+
                 return Response({
-                    'message': 'Invaild username or password'
+                    'status': 200,
+                    'message': "Login successful",
+                    'token': encrypt_token,
                 })
-
-            update_last_login(None, user)
-
-            payload = {
-                'id': user.id,
-                'account_type': "user",
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=15),
-                'iat': datetime.datetime.utcnow()
-            }
-            token = jwt.encode(payload, key=JWT_KEY, algorithm='HS256')
-            encrypt_token = encrypt(token)
-
-            return Response({
-                'status': 200,
-                'message': "Login successful",
-                'token': encrypt_token,
-            })
-        else:
+            else:
+                return Response({
+                    'status': 400,
+                    'message': 'Invaild email or password',
+                    # 'data': serializer.errors
+                })
+        except Exception:
             return Response({
                 'status': 400,
-                'message': 'Invaild email or password',
-                # 'data': serializer.errors
+                'message': 'Something went wrong, try again later'
             })
 
 
@@ -113,10 +120,11 @@ class UserViewAPI(APIView):
             payload = jwt_decoder(request.query_params['token'])
             user = User.objects.get(id=payload['id'])
             serializer = UserSerializer(user)
+            encrypted_data = encrypt(json.dumps(serializer.data))
 
             return Response({
                 'status': 200,
-                'data': serializer.data,
+                'data': encrypted_data,
             })
         except Exception:
             return Response({
@@ -164,17 +172,17 @@ class UpdateUserAPI(APIView):
             user.save()
 
             serializer = UserSerializer(user)
+            encrypted_data = encrypt(json.dumps(serializer.data))
 
             return Response({
                 'status': 200,
-                'data': serializer.data
+                'data': encrypted_data,
             })
-        except Exception as e:
-            print(e)
-            # return Response({
-            #     'status': 400,
-            #     'message': 'Unauthenticated'
-            # })
+        except Exception :
+            return Response({
+                'status': 400,
+                'message': 'Unauthenticated'
+            })
 # USER
 
 # DEALER
@@ -331,47 +339,54 @@ class Resend_Otp(APIView):
     
 class Dealer_LoginAPI(APIView):
     def post(self, request):
-        serializer = DealerLogInSerializer(data=request.data)
+        try:
+            serializer = DealerLogInSerializer(data=request.data)
 
-        if serializer.is_valid():
-            email = serializer.data['email']
-            password = serializer.data['password']
+            if serializer.is_valid():
+                email = serializer.data['email']
+                password = serializer.data['password']
 
-            user = User.objects.filter(email=email).first()
-            if (not user or not user.check_password(password)
-                    or user.is_dealer is False):
+                user = User.objects.filter(email=email).first()
+                if (not user or not user.check_password(password)
+                        or user.is_dealer is False):
+                    return Response({
+                        'status': 400,
+                        'message': 'Invaild email or password'
+                    })
+                
+                if user.is_verified is False:
+                    HandleEmail(user, "update").start()
+                    return Response({
+                        'status': True,
+                        'email': serializer.data['email']
+                    })
+
+                update_last_login(None, user)
+
+                payload = {
+                    'id': user.id,
+                    'account_type': "gas_dealer",
+                    'exp': datetime.datetime.utcnow() + datetime.timedelta(days=15),
+                    'iat': datetime.datetime.utcnow()
+                }
+                token = jwt.encode(payload, key=JWT_KEY, algorithm='HS256')
+                encrypt_token = encrypt(token)
+
                 return Response({
-                    'message': 'Invaild email or password'
+                    'status': 200,
+                    'message': "Login successful",
+                    'token': encrypt_token,
                 })
-            
-            if user.is_verified is False:
-                HandleEmail(user, "update").start()
+            else:
                 return Response({
-                    'status': True,
-                    'email': serializer.data['email']
+                    'status': 400,
+                    'message': 'Invaild email or password',
+                    'data': serializer.errors
                 })
-
-            update_last_login(None, user)
-
-            payload = {
-                'id': user.id,
-                'account_type': "gas_dealer",
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=15),
-                'iat': datetime.datetime.utcnow()
-            }
-            token = jwt.encode(payload, key=JWT_KEY, algorithm='HS256')
-            encrypt_token = encrypt(token)
-
-            return Response({
-                'status': 200,
-                'message': "Login successful",
-                'token': encrypt_token,
-            })
-        else:
+        except Exception:
             return Response({
                 'status': 400,
-                'message': 'Invaild email or password',
-                'data': serializer.errors
+                'message': 'Something went wrong, try again later'
             })
 
 

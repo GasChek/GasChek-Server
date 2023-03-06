@@ -8,21 +8,30 @@ from dotenv import load_dotenv
 load_dotenv()
 JWT_KEY = os.getenv('JWT_KEY')
 SERVER_ENCRYPTION_KEY = os.getenv('SERVER_ENCRYPTION_KEY')
-
+SERVER_ENCRYPTION_IV_KEY = os.getenv('SERVER_ENCRYPTION_IV_KEY').encode('utf-8')
 
 def encrypt(raw):
-    raw = pad(raw.encode(), 16)
-    cipher = AES.new(SERVER_ENCRYPTION_KEY.encode('utf-8'), AES.MODE_ECB)
-    return base64.b64encode(cipher.encrypt(raw))
+    #### AES ECB
+    # raw = pad(raw.encode(), 16)
+    # cipher = AES.new(SERVER_ENCRYPTION_KEY.encode('utf-8'), AES.MODE_ECB)
+    # return base64.b64encode(cipher.encrypt(raw))
 
+    #### AES CBC
+    data= pad(raw.encode(),16)
+    cipher = AES.new(SERVER_ENCRYPTION_KEY.encode('utf-8'), AES.MODE_CBC, SERVER_ENCRYPTION_IV_KEY)
+    return base64.b64encode(cipher.encrypt(data)).decode("utf-8", "ignore")
 
 def decrypt(enc):
+    # enc = base64.b64decode(enc)
+    # cipher = AES.new(SERVER_ENCRYPTION_KEY.encode('utf-8'), AES.MODE_ECB)
+    # return unpad(cipher.decrypt(enc), 16)
+
     enc = base64.b64decode(enc)
-    cipher = AES.new(SERVER_ENCRYPTION_KEY.encode('utf-8'), AES.MODE_ECB)
-    return unpad(cipher.decrypt(enc), 16)
+    cipher = AES.new(SERVER_ENCRYPTION_KEY.encode('utf-8'), AES.MODE_CBC, SERVER_ENCRYPTION_IV_KEY)
+    return unpad(cipher.decrypt(enc),16).decode("utf-8", "ignore")
 
 
 def jwt_decoder(token):
-    d_token = decrypt(token).decode("utf-8", "ignore")
+    d_token = decrypt(token)
     payload = jwt.decode(d_token, key=JWT_KEY, algorithms=['HS256'])
     return payload
