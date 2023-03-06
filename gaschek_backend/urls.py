@@ -21,7 +21,7 @@ admin.site.site_title = "GasChek"
 admin.site.index_title = "GasChek"
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/gaschek-administration/999/', admin.site.urls),
     path('esp32/', include('esp32.urls')),
     path('accounts/', include('accounts.urls')),
     path('dealers/', include('orders.urls')),
