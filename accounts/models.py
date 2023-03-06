@@ -107,7 +107,7 @@ class Gaschek_Device(models.Model):
 class Gas_Dealer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     company_name = models.CharField(max_length=50)
-    phonenumber = models.CharField(max_length=15, unique=True)
+    phonenumber = models.CharField(max_length=15)
     state = models.CharField(max_length=25)
     rating = models.CharField(max_length=10, blank=True)
     users_rate_count = models.CharField(max_length=10000, blank=True)
