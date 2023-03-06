@@ -228,10 +228,11 @@ class CreateGasDealerAPI(APIView):
             account_number=request.data['account_number']).first()
         
         if gas_dealer:
-            return Response({
-                'status': 400,
-                'message': 'Account Number already exists',
-            })
+            if gas_dealer.is_verified is True:
+                return Response({
+                    'status': 400,
+                    'message': 'Account Number already exists',
+                })
 
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
