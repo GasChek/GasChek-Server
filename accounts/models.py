@@ -128,6 +128,7 @@ class Gas_Dealer(models.Model):
     percentage_charge = models.DecimalField(blank=True, decimal_places=1, max_digits=4)
     subaccount_code = models.CharField(max_length=100, blank=True)
     subaccount_id = models.BigIntegerField(blank=True)
+    is_verified = models.BooleanField(default=False)
 
     def __str__(self):
         return self.company_name

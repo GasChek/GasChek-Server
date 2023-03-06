@@ -207,26 +207,20 @@ class CreateGasDealerAPI(APIView):
         gas_dealer = Gas_Dealer.objects.filter(
             company_name=request.data['company_name']).first()
         
-        if gas_dealer:
-            user = User.objects.filter(email=gas_dealer.user.email).first()
-
-            if user.is_verified is True:
-                return Response({
-                    'status': 400,
-                    'message': 'Company name already exists',
-                })
+        if gas_dealer.is_verified is True:
+            return Response({
+                'status': 400,
+                'message': 'Company name already exists',
+            })
         
         gas_dealer = Gas_Dealer.objects.filter(
             phonenumber=request.data['phonenumber']).first()
         
-        if gas_dealer:
-            user = User.objects.filter(email=gas_dealer.user.email).first()
-
-            if user.is_verified is True:
-                return Response({
-                    'status': 400,
-                    'message': 'Phonenumber already exists',
-                })
+        if gas_dealer.is_verified is True:
+            return Response({
+                'status': 400,
+                'message': 'Phonenumber already exists',
+            })
         
         gas_dealer = Gas_Dealer.objects.filter(
             account_number=request.data['account_number']).first()
@@ -318,9 +312,11 @@ class Verify_Otp(APIView):
                 'status': 400,
                 'message': 'Invaild otp'
             })
-
+        gas_dealer = Gas_Dealer.objects.filter(user=user).first()
         user.is_verified = True
+        gas_dealer.is_verified = True
         user.save()
+        gas_dealer.save()
         return Response({
             'status': 200,
         })

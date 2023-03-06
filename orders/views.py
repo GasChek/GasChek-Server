@@ -14,7 +14,7 @@ from functions.encryption import jwt_decoder
 class AllGasDealersAPI(APIView):
     def get(self, request):
         gas_dealers = Gas_Dealer.objects.filter(
-            state=request.query_params['state'])
+            state=request.query_params['state'], is_verified=True)
 
         serializer = GasDealerSearchSerializer(gas_dealers, many=True)
 
