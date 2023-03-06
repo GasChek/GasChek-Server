@@ -207,20 +207,22 @@ class CreateGasDealerAPI(APIView):
         gas_dealer = Gas_Dealer.objects.filter(
             company_name=request.data['company_name']).first()
         
-        if gas_dealer.is_verified is True:
-            return Response({
-                'status': 400,
-                'message': 'Company name already exists',
-            })
+        if gas_dealer:
+            if gas_dealer.is_verified is True:
+                return Response({
+                    'status': 400,
+                    'message': 'Company name already exists',
+                })
         
         gas_dealer = Gas_Dealer.objects.filter(
             phonenumber=request.data['phonenumber']).first()
         
-        if gas_dealer.is_verified is True:
-            return Response({
-                'status': 400,
-                'message': 'Phonenumber already exists',
-            })
+        if gas_dealer:
+            if gas_dealer.is_verified is True:
+                return Response({
+                    'status': 400,
+                    'message': 'Phonenumber already exists',
+                })
         
         gas_dealer = Gas_Dealer.objects.filter(
             account_number=request.data['account_number']).first()
