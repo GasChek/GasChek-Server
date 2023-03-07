@@ -203,10 +203,6 @@ class CreateGasDealerAPI(APIView):
                                                     subaccount_code=gas_dealer.subaccount_code,
                                                     subaccount_id=gas_dealer.subaccount_id)
                 user.delete()
-                return Response({
-                    'status': 400,
-                    'message': 'Try again',
-                })
               
         gas_dealer = Gas_Dealer.objects.filter(
             company_name=request.data['company_name']).first()
