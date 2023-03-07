@@ -28,7 +28,7 @@ load_dotenv()
 SECRET_KEY = os.getenv('SERVER_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -154,8 +154,6 @@ REST_FRAMEWORK = {
 }
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'http://localhost:8000',
     'https://gaschek.herokuapp.com',
     'https://gaschek.netlify.app'
 ]
