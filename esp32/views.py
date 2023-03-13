@@ -1,8 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .serializers import (Gaschek_Get_Serializer,
-                          Gas_Leakage_Serializer,)
-from accounts.serializers import UserSerializer
+from .serializers import Gas_Leakage_Serializer
 from accounts.models import Gaschek_Device
 from accounts.models import User
 from .models import Gas_Leakage

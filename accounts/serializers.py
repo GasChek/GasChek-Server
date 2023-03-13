@@ -10,6 +10,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'email', "usernames", "firstname",
                   "lastname", "is_active", "password",
                   "is_dealer", "is_verified", "country_code",
+                  "created_at", "updated_at",
                   "phonenumber_ordering",
                   "phonenumber_gaschek_device_1",
                   "phonenumber_gaschek_device_2",
@@ -45,5 +46,5 @@ class LogInSerializer(serializers.Serializer):
 
 
 class DealerLogInSerializer(serializers.Serializer):
-    email = serializers.CharField()
+    email = serializers.EmailField()
     password = serializers.CharField()

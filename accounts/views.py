@@ -23,25 +23,6 @@ JWT_KEY = os.getenv('JWT_KEY')
 
 permission_classes = [HasAPIKey]
 
-
-class CreateUserAPI(APIView):
-    def post(self, request):
-        serializer = UserSerializer(data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-
-            return Response({
-                'status': 200,
-                'data': serializer.data,
-            })
-
-        return Response({
-            'status': 400,
-            'message': 'Something went wrong',
-            'data': serializer.errors
-        })
-
 # CHECK IF ACCOUNT IS USER OR GAS DEALER
 class AccountViewAPI(APIView):
     def get(self, request):
@@ -79,7 +60,7 @@ class LoginAPI(APIView):
                 user = User.objects.filter(usernames=username).first()
 
                 if (not user or not user.check_password(password)
-                        or user.is_dealer is True):
+                        or user.is_dealer is True or user.is_verified is False):
                     return Response({
                         'status': 400,
                         'message': 'Invaild username or password'

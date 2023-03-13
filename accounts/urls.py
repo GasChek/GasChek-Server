@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import (CreateUserAPI, LoginAPI,
+from .views import (LoginAPI,
                     UserViewAPI, UpdateUserAPI,
                     AccountViewAPI, CreateGasDealerAPI,
                     Verify_Otp, Resend_Otp, Dealer_LoginAPI,
@@ -7,7 +7,6 @@ from .views import (CreateUserAPI, LoginAPI,
                     Update_GasDealer_details)
 
 urlpatterns = [
-    path('create_user/', CreateUserAPI.as_view()),
     path('get_account_type/', AccountViewAPI.as_view()),
     path('login/', LoginAPI.as_view()),
     path('get_user/', UserViewAPI.as_view()),
