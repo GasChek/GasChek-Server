@@ -9,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'email', "usernames", "firstname",
                   "lastname", "is_active", "password",
-                  "is_dealer", "is_verified", "country_code",
+                  "is_dealer", "is_connected_with_device", "is_verified", "country_code",
                   "created_at", "updated_at",
                   "phonenumber_ordering",
                   "phonenumber_gaschek_device_1",

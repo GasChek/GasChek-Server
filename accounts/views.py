@@ -17,6 +17,7 @@ from functions.encryption import jwt_decoder, encrypt
 from external_api.paystack import create_subaccount, update_subaccount
 import os
 from dotenv import load_dotenv
+from django.core.exceptions import ObjectDoesNotExist
 
 load_dotenv()
 JWT_KEY = os.getenv('JWT_KEY')
@@ -57,13 +58,26 @@ class LoginAPI(APIView):
                 username = serializer.data['username']
                 password = serializer.data['password']
 
-                user = User.objects.filter(usernames=username).first()
-
-                if (not user or not user.check_password(password)
-                        or user.is_dealer is True or user.is_verified is False):
+                try:
+                    user = User.objects.get(usernames=username)
+                except ObjectDoesNotExist:
                     return Response({
                         'status': 400,
                         'message': 'Invaild username or password'
+                    })
+                
+                if (not user.check_password(password)
+                        or user.is_dealer is True or user.is_connected_with_device is False):
+                    return Response({
+                        'status': 400,
+                        'message': 'Invaild username or password'
+                    })
+                
+                if user.is_verified is False:
+                    return Response({
+                        'status': 201,
+                        'message': 'Change password',
+                        'username': user.usernames
                     })
 
                 update_last_login(None, user)
@@ -94,6 +108,35 @@ class LoginAPI(APIView):
                 'message': 'Something went wrong, try again later'
             })
 
+
+class ChangePasswordAPI(APIView):
+    def post(self, request):
+        try:
+            try:
+                user = User.objects.get(usernames=request.data['username'])
+            except ObjectDoesNotExist:
+                return Response({
+                    'status': 400,
+                    'message':'Invaild user',
+                })
+
+            if user.check_password(request.data['password']):
+                return Response({
+                    'status': 400,
+                    'message':'Cannot use this password.',
+                })
+            user.set_password(request.data['password'])
+            user.is_verified = True
+            user.save()
+            return Response({
+                'status': 200,
+                'message':'Password successfully changed',
+            })
+        except Exception:
+            return Response({
+                "status": 400,
+                "message": "Something went wrong",
+            })
 
 class UserViewAPI(APIView):
     def get(self, request):
@@ -326,8 +369,15 @@ class Dealer_LoginAPI(APIView):
                 email = serializer.data['email']
                 password = serializer.data['password']
 
-                user = User.objects.filter(email=email).first()
-                if (not user or not user.check_password(password)
+                try:
+                    user = User.objects.get(email=email)
+                except ObjectDoesNotExist:
+                    return Response({
+                        'status': 400,
+                        'message': 'Invaild email or password'
+                    })
+                
+                if (not user.check_password(password)
                         or user.is_dealer is False):
                     return Response({
                         'status': 400,
@@ -395,7 +445,7 @@ class GetGasDealerAPI(APIView):
             gas_dealer = Gas_Dealer.objects.get(id=request.query_params['id'])
             cylinder_price = Cylinder_Price.objects.filter(
                 gas_dealer=gas_dealer)
-            fee = Delivery_Fee.objects.filter(gas_dealer=gas_dealer).first()
+            fee = Delivery_Fee.objects.get(gas_dealer=gas_dealer)
 
             serializer = GasDealerSerializer(gas_dealer)
             serializer2 = Cylinder_Price_Serializer(cylinder_price, many=True)

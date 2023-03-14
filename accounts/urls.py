@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import (LoginAPI,
+from .views import (LoginAPI, ChangePasswordAPI,
                     UserViewAPI, UpdateUserAPI,
                     AccountViewAPI, CreateGasDealerAPI,
                     Verify_Otp, Resend_Otp, Dealer_LoginAPI,
@@ -9,6 +9,7 @@ from .views import (LoginAPI,
 urlpatterns = [
     path('get_account_type/', AccountViewAPI.as_view()),
     path('login/', LoginAPI.as_view()),
+    path('change_password/', ChangePasswordAPI.as_view()),
     path('get_user/', UserViewAPI.as_view()),
     path('update_user/', UpdateUserAPI.as_view()),
 

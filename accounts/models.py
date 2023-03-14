@@ -46,6 +46,7 @@ class User(AbstractUser):
     phonenumber_gaschek_device_2 = models.CharField(max_length=25, blank=True)
     phonenumber_gaschek_device_3 = models.CharField(max_length=25, blank=True)
     state = models.CharField(max_length=25, blank=True)
+    is_connected_with_device = models.BooleanField(default=False)
     is_dealer = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
