@@ -155,7 +155,8 @@ REST_FRAMEWORK = {
 
 CORS_ALLOWED_ORIGINS = [
     'https://gaschek.herokuapp.com',
-    'https://gaschek.netlify.app'
+    'https://gaschek.netlify.app',
+    'https://gaschekadmin.netlify.app',
 ]
 CORS_ORIGIN_WHITELIST = [
     'https://gaschek.netlify.app',
