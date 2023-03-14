@@ -99,7 +99,7 @@ class LoginAPI(APIView):
             else:
                 return Response({
                     'status': 400,
-                    'message': 'Invaild email or password',
+                    'message': 'Invaild username or password',
                     # 'data': serializer.errors
                 })
         except Exception:
