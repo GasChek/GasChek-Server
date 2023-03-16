@@ -169,7 +169,7 @@ class SendDeviceDetailsConsumer(AsyncWebsocketConsumer):
         gaschek_device.gas_mass = client_data['gas_mass']
         gaschek_device.gas_level = client_data['gas_level']
         gaschek_device.battery_level = client_data['battery_level']
-        sync_to_async(gaschek_device.save)()
+        await sync_to_async(gaschek_device.save)()
 
         # serializer = Gaschek_Get_Serializer(data)
         # serializer2 = UserSerializer(user)
