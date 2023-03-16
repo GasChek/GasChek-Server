@@ -162,7 +162,7 @@ class SendDeviceDetailsConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         client_data = json.loads(text_data)
 
-        user = User.objects.get(id=client_data['user_id'])
+        user = await sync_to_async(User.objects.get)(id=client_data['user_id'])
         gaschek_device = await sync_to_async(Gaschek_Device.objects.get)(user=user)
 
         gaschek_device.cylinder = client_data['cylinder']
