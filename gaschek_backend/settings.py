@@ -28,7 +28,7 @@ load_dotenv()
 SECRET_KEY = os.getenv('SERVER_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -156,6 +156,7 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://localhost:8000',
+    'http://192.168.43.102:8000',
     'exp://192.168.43.102:19000',
     'https://gaschek.herokuapp.com',
     'https://gaschek.netlify.app',
@@ -166,7 +167,7 @@ CORS_ORIGIN_WHITELIST = [
 ]
 CSRF_TRUSTED_ORIGINS = ['https://gaschek.herokuapp.com']
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True
+# SECURE_SSL_REDIRECT = True
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -176,7 +177,7 @@ EMAIL_HOST_USER = 'gaschektechnology@gmail.com'
 EMAIL_HOST_PASSWORD = 'wpjzmukkuxrrgmcn'
 EMAIL_USE_SSL = True
 
-prod_db  =  dj_database_url.config(conn_max_age=500)
+prod_db = dj_database_url.config(conn_max_age=500)
 DATABASES['default'].update(prod_db)
 
 
