@@ -120,6 +120,11 @@ class ChangePasswordAPI(APIView):
                     'message':'Invaild user',
                 })
 
+            if user.is_verified is True:
+                return Response({
+                    'status': 500,
+                    'message':'Already verified',
+                })
             if user.check_password(request.data['password']):
                 return Response({
                     'status': 400,

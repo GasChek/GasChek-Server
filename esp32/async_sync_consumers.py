@@ -68,10 +68,6 @@ class ToggleGasDetailsConsumer(AsyncWebsocketConsumer):
                     data.alarm = "on"
                 await sync_to_async(data.save)()
 
-                # serializer = Gaschek_Device_Serializer(data)
-                # await self.send(json.dumps({
-                #     'message': serializer.data
-                # }))
             except Exception:
                 await self.send(json.dumps({
                     'message': 400
@@ -88,10 +84,6 @@ class ToggleGasDetailsConsumer(AsyncWebsocketConsumer):
                     data.call = "on"
                 await sync_to_async(data.save)()
 
-                # serializer = Gaschek_Device_Serializer(data)
-                # await self.send(json.dumps({
-                #     'message': serializer.data
-                # }))
             except Exception:
                 await self.send(json.dumps({
                     'message': 400
@@ -107,10 +99,6 @@ class ToggleGasDetailsConsumer(AsyncWebsocketConsumer):
                     data.text = "on"
                 await sync_to_async(data.save)()
 
-                # serializer = Gaschek_Device_Serializer(data)
-                # await self.send(json.dumps({
-                #     'message': serializer.data
-                # }))
             except Exception:
                 await self.send(json.dumps({
                     'message': 400
