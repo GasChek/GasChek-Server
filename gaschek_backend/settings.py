@@ -104,7 +104,6 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -119,7 +118,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
@@ -154,10 +152,10 @@ REST_FRAMEWORK = {
 }
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'http://localhost:8000',
-    'http://192.168.43.102:8000',
-    'exp://192.168.43.102:19000',
+    # 'http://localhost:3000',
+    # 'http://localhost:8000',
+    # 'http://192.168.43.102:8000',
+    # 'exp://192.168.43.102:19000',
     'https://gaschek.herokuapp.com',
     'https://gaschek.netlify.app',
     'https://gaschekadmin.netlify.app',
@@ -167,7 +165,7 @@ CORS_ORIGIN_WHITELIST = [
 ]
 CSRF_TRUSTED_ORIGINS = ['https://gaschek.herokuapp.com']
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-# SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = True
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'

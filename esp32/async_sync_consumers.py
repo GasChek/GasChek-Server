@@ -151,6 +151,7 @@ class SendDeviceDetailsConsumer(AsyncWebsocketConsumer):
         client_data = json.loads(text_data)
 
         user = await sync_to_async(User.objects.get)(id=client_data['user_id'])
+        print(client_data)
         gaschek_device = await sync_to_async(Gaschek_Device.objects.get)(user=user)
 
         gaschek_device.cylinder = client_data['cylinder']
@@ -158,20 +159,6 @@ class SendDeviceDetailsConsumer(AsyncWebsocketConsumer):
         gaschek_device.gas_level = client_data['gas_level']
         gaschek_device.battery_level = client_data['battery_level']
         await sync_to_async(gaschek_device.save)()
-
-        # serializer = Gaschek_Get_Serializer(data)
-        # serializer2 = UserSerializer(user)
-        
-        # self.send(json.dumps({
-        #     'call': serializer.data['call'],
-        #     'alarm': serializer.data['alarm'],
-        #     'text': serializer.data['text'], 
-        #     'country_code': serializer2.data['country_code'], 
-        #     'number_one': serializer2.data['phonenumber_ordering'],
-        #     'number_two': serializer2.data['phonenumber_gaschek_device_1'],
-        #     'number_three': serializer2.data['phonenumber_gaschek_device_2'],
-        #     'number_four': serializer2.data['phonenumber_gaschek_device_3']              
-        # }))         
 
 class GasLeakageNotificationConsumer(WebsocketConsumer):
     def connect(self):
