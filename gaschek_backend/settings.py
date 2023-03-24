@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'rest_framework_api_key',
     'gaschek_backend',
     'esp32',
+    'client_admin',
     'accounts',
     'orders',
     'payment',
@@ -153,6 +154,7 @@ REST_FRAMEWORK = {
 
 CORS_ALLOWED_ORIGINS = [
     # 'http://localhost:3000',
+    # 'http://localhost:3001',
     # 'http://localhost:8000',
     # 'http://192.168.43.102:8000',
     # 'exp://192.168.43.102:19000',
@@ -165,7 +167,7 @@ CORS_ORIGIN_WHITELIST = [
 ]
 CSRF_TRUSTED_ORIGINS = ['https://gaschek.herokuapp.com']
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True
+# SECURE_SSL_REDIRECT = True
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'

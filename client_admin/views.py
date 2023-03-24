@@ -51,7 +51,7 @@ class AdminLoginAPI(APIView):
                     })
 
                 if (not user.check_password(password)
-                        or user.is_superuser is False or user.is_verified is False):
+                        or user.is_superuser is False):
                     return Response({
                         'status': 400,
                         'message': 'Invaild email or password'
@@ -84,6 +84,7 @@ class AdminLoginAPI(APIView):
                 'status': 400,
                 'message': 'Something went wrong, try again later'
             })
+
 class List_Not_Connected_With_Device_UsersAPI(APIView, LimitOffsetPagination):
     def get(self, request):
         try:
