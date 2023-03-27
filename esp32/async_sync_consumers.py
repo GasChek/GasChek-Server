@@ -1,4 +1,4 @@
-import json, os, random
+import json, os
 from .serializers import Gaschek_Device_Serializer, Gaschek_Get_Serializer
 from accounts.serializers import UserSerializer
 from accounts.models import Gaschek_Device, User
@@ -20,11 +20,12 @@ class GasDetailsConsumer(WebsocketConsumer):
         self.close()
 
     def receive(self, text_data):
-        client_data = json.loads(text_data)
+        try:
+            client_data = json.loads(text_data)
+            payload = jwt_decoder(client_data['gaschek'])
 
-        if client_data["action"] == 'cnt':
-            def send_data():
-                try:
+            if client_data["action"] == 'cnt':
+                def send_data():
                     payload = jwt_decoder(client_data['gaschek'])
                     data = Gaschek_Device.objects.get(user=payload['id'])
                     serializer = Gaschek_Device_Serializer(data)
@@ -33,16 +34,17 @@ class GasDetailsConsumer(WebsocketConsumer):
                     self.send(json.dumps({
                         'msg':encrypted_data
                     }))  
-                        
-                except Exception:
-                    self.send(json.dumps({
-                        'msg':400
-                    }))
-            send_data()
-
-            def give_data(**kwargs):
+                            
                 send_data()
-            post_save.connect(give_data, sender=Gaschek_Device, weak=False)        
+        except Exception:
+            self.send(json.dumps({
+                'msg':400
+            }))
+
+        def give_data(instance, **kwargs):
+            if(instance.user.id == payload['id']):
+                send_data()
+        post_save.connect(give_data, sender=Gaschek_Device, weak=False)        
 
 class ToggleGasDetailsConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -131,9 +133,9 @@ class GasDetailsDeviceConsumer(WebsocketConsumer):
                 }))
             send_data()
 
-            def give_data(**kwargs):
-                send_data()
-
+            def give_data(instance, **kwargs):
+                if(instance.user.id == client_data['user_id']):
+                    send_data()
             post_save.connect(give_data, sender=Gaschek_Device, weak=False)
 
 class SendDeviceDetailsConsumer(AsyncWebsocketConsumer):
@@ -165,12 +167,12 @@ class GasLeakageNotificationConsumer(WebsocketConsumer):
         # pass
 
     def receive(self, text_data):
-        client_data = json.loads(text_data)
+        try:
+            client_data = json.loads(text_data)
+            payload = jwt_decoder(client_data['gaschek'])
 
-        if (client_data["action"] == 'cnt'):
-            def send_data():
-                try:
-                    payload = jwt_decoder(client_data['gaschek'])
+            if (client_data["action"] == 'cnt'):
+                def send_data():
                     gaschek_device = Gaschek_Device.objects.get(user=payload['id'])
                     leak = Gas_Leakage.objects.filter(gaschek_device=gaschek_device)
 
@@ -178,14 +180,14 @@ class GasLeakageNotificationConsumer(WebsocketConsumer):
                         'status': 200,
                         'leakages': len(leak)
                     }))
-                except Exception:
-                    self.send(json.dumps({
-                        'status': 400,
-                    }))   
+                send_data() 
 
-            send_data() 
+        except Exception:
+            self.send(json.dumps({
+                'status': 400,
+            }))   
 
-            def give_data(**kwargs):
+        def give_data(instance, **kwargs):
+            if(instance.user.id == payload['id']):
                 send_data()
-
-            post_save.connect(give_data, sender=Gas_Leakage, weak=False)
+        post_save.connect(give_data, sender=Gas_Leakage, weak=False)
