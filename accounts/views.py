@@ -450,8 +450,9 @@ class GetGasDealerAPI(APIView):
             gas_dealer = Gas_Dealer.objects.get(id=request.query_params['id'])
             cylinder_price = Cylinder_Price.objects.filter(
                 gas_dealer=gas_dealer)
+            if not cylinder_price:
+                raise Exception
             fee = Delivery_Fee.objects.get(gas_dealer=gas_dealer)
-
             serializer = GasDealerSerializer(gas_dealer)
             serializer2 = Cylinder_Price_Serializer(cylinder_price, many=True)
             serializer3 = Delivery_Fee_Serializer(fee)
@@ -462,10 +463,11 @@ class GetGasDealerAPI(APIView):
                 'data2': serializer2.data,
                 'data3': serializer3.data
             })
-        except Exception:
+        except Exception as e:
+            print(e)
             return Response({
                 'status': 400,
-                'message': 'Error'
+                'message': 'Dealer is unavailable'
             })
 
 

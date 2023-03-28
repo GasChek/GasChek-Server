@@ -199,7 +199,6 @@ class Get_orders(APIView, LimitOffsetPagination):
                     'dealer_pending': len(dealer_pending),
                     'data': serializer.data
                 })
-
             else:
                 orders = Gas_orders.objects.filter(
                     user=user).order_by('created_at').reverse()
@@ -207,8 +206,7 @@ class Get_orders(APIView, LimitOffsetPagination):
                 serializer = Order_Serializer(results, many=True)
                 return self.get_paginated_response(serializer.data)
                     
-        except Exception as e:
-            print(e)
+        except Exception:
             return Response({
                 'status': 400,
             })

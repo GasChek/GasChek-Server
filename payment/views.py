@@ -85,8 +85,7 @@ class PaymentAPI(APIView):
                     'status': 400,
                     'message': 'Invalid payment'
                 })
-        except Exception as e:
-            print(e)
+        except Exception:
             return Response({
                 'status': 400,
                 'message': "Error processing payment, try again."
