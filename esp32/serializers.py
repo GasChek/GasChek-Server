@@ -6,14 +6,14 @@ from .models import Gas_Leakage
 class Gaschek_Device_Serializer(serializers.ModelSerializer):
     class Meta:
         model = Gaschek_Device
-        fields = ['alarm', 'text', 'call', 'cylinder',
+        fields = ['alarm', 'text', 'call', 'cylinder', 'indicator',
                   'gas_mass', 'gas_level', 'battery_level']
 
 
 class Gaschek_Get_Serializer(serializers.ModelSerializer):
     class Meta:
         model = Gaschek_Device
-        fields = ['alarm', 'text', 'call']
+        fields = ['alarm', 'text', 'call', 'indicator']
 
 
 class Gas_Leakage_Serializer(serializers.ModelSerializer):

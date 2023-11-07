@@ -1,1 +1,1 @@
-web: daphne gaschek_backend.asgi:application --port=$PORT --bind 0.0.0.0
+web: daphne gaschek_server.asgi:application --port=$PORT --bind 0.0.0.0

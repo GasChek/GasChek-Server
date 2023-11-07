@@ -1,6 +1,5 @@
 from django.db import models
-from orders.models import Cylinder_Price
-from accounts.models import User, Gas_Dealer
+from accounts.models import User, Gas_Dealer, Cylinder_Price
 
 # Create your models here.
 

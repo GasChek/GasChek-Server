@@ -4,11 +4,9 @@ from .serializers import (LogInSerializer,
                           DealerLogInSerializer,
                           UserSerializer,
                           GasDealerSerializer)
-from .models import User, Gas_Dealer, Token, Abandoned_Subaccounts
-from orders.models import Cylinder_Price, Delivery_Fee
+from .models import User, Gas_Dealer, Token, Abandoned_Subaccounts, Cylinder_Price, Delivery_Fee
 from orders.serializers import (Cylinder_Price_Serializer,
                                 Delivery_Fee_Serializer)
-from rest_framework_api_key.permissions import HasAPIKey
 import jwt, json
 import datetime
 from django.contrib.auth.models import update_last_login
@@ -22,13 +20,11 @@ from django.core.exceptions import ObjectDoesNotExist
 load_dotenv()
 JWT_KEY = os.getenv('JWT_KEY')
 
-permission_classes = [HasAPIKey]
-
 # CHECK IF ACCOUNT IS USER OR GAS DEALER
 class AccountViewAPI(APIView):
     def get(self, request):
         try:
-            payload = jwt_decoder(request.query_params['token'])
+            payload = jwt_decoder(request.META.get('HTTP_AUTHORIZATION'))
 
             if (payload['account_type'] == 'user'
                     or payload['account_type'] == 'gas_dealer'):
@@ -146,7 +142,7 @@ class ChangePasswordAPI(APIView):
 class UserViewAPI(APIView):
     def get(self, request):
         try:
-            payload = jwt_decoder(request.query_params['token'])
+            payload = jwt_decoder(request.META.get('HTTP_AUTHORIZATION'))
             user = User.objects.get(id=payload['id'])
             serializer = UserSerializer(user)
             encrypted_data = encrypt(json.dumps(serializer.data))
@@ -165,7 +161,7 @@ class UserViewAPI(APIView):
 class UpdateUserAPI(APIView):
     def post(self, request):
         try:
-            payload = jwt_decoder(request.data['token'])
+            payload = jwt_decoder(request.META.get('HTTP_AUTHORIZATION'))
             user = User.objects.get(id=payload['id'])
 
             if not user:
@@ -201,17 +197,16 @@ class UpdateUserAPI(APIView):
             user.save()
 
             serializer = UserSerializer(user)
-            encrypted_data = encrypt(json.dumps(serializer.data))
 
-            return Response({
+            return Response(encrypt(json.dumps({
                 'status': 200,
-                'data': encrypted_data,
-            })
+                'data': serializer.data,
+            })))
         except Exception :
-            return Response({
+            return Response(encrypt(json.dumps({
                 'status': 400,
                 'message': 'Unauthenticated'
-            })
+            })))
 # USER
 
 # DEALER
@@ -428,15 +423,15 @@ class Dealer_LoginAPI(APIView):
 class GasDealerViewAPI(APIView):
     def get(self, request):
         try:
-            payload = jwt_decoder(request.query_params['token'])
+            payload = jwt_decoder(request.META.get('HTTP_AUTHORIZATION'))
             user = User.objects.get(id=payload['id'])
             gas_dealer = Gas_Dealer.objects.get(user=user)
             serializer = GasDealerSerializer(gas_dealer)
 
-            return Response({
+            return Response(encrypt(json.dumps({
                 'status': 200,
                 'data': serializer.data,
-            })
+            })))
         except Exception:
             return Response({
                 'status': 400,
@@ -457,30 +452,29 @@ class GetGasDealerAPI(APIView):
             serializer2 = Cylinder_Price_Serializer(cylinder_price, many=True)
             serializer3 = Delivery_Fee_Serializer(fee)
 
-            return Response({
+            return Response(encrypt(json.dumps({
                 'status': 200,
                 'data': serializer.data,
                 'data2': serializer2.data,
                 'data3': serializer3.data
-            })
-        except Exception as e:
-            print(e)
-            return Response({
+            })))
+        except Exception:
+            return Response(encrypt(json.dumps({
                 'status': 400,
                 'message': 'Dealer is unavailable'
-            })
+            })))
 
 
 class Update_GasDealer_details(APIView):
     def post(self, request):
         try:
-            payload = jwt_decoder(request.data['token'])
+            payload = jwt_decoder(request.META.get('HTTP_AUTHORIZATION'))
             gas_dealer = Gas_Dealer.objects.get(user=payload["id"])
 
             if not gas_dealer:
-                return Response({
+                return Response(encrypt(json.dumps({
                     "status": 400,
-                })
+                })))
 
             # gas_dealer.selling = request.data.get('selling', gas_dealer.selling)
             gas_dealer.open = request.data.get('open', gas_dealer.open)
@@ -488,9 +482,9 @@ class Update_GasDealer_details(APIView):
 
             serializer = GasDealerSerializer(gas_dealer)
 
-            return Response({
+            return Response(encrypt(json.dumps({
                 'status': 200,
                 'data': serializer.data
-            })
+            })))
         except Exception as e:
             print(e)

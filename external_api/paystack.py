@@ -7,6 +7,7 @@ load_dotenv()
 
 PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
 
+
 def initialize_payment(email, price, fee, subaccount_code, callback_url, cylinder, gas_dealer):
     url = 'https://api.paystack.co/transaction/initialize'
     headers = {
@@ -18,7 +19,7 @@ def initialize_payment(email, price, fee, subaccount_code, callback_url, cylinde
         "email": email,
         "amount": (price + fee) * 100,
         "subaccount": subaccount_code,
-        "bearer": "account", 
+        "bearer": "account",
         "callback_url": callback_url,
         "metadata": {
             "custom_fields": [
@@ -35,12 +36,12 @@ def initialize_payment(email, price, fee, subaccount_code, callback_url, cylinde
                 {
                     "display_name": "Price",
                     "variable_name": "Price",
-                    "value": "NGN {}".format(price) 
+                    "value": "NGN {}".format(price)
                 },
                 {
                     "display_name": "Delivery fee",
                     "variable_name": "Delivery fee",
-                    "value": "NGN {}".format(fee) 
+                    "value": "NGN {}".format(fee)
                 },
             ]
         }
@@ -51,6 +52,7 @@ def initialize_payment(email, price, fee, subaccount_code, callback_url, cylinde
         return str(response.status_code)
 
     return response.json()
+
 
 def verify_payment(refrence):
     url = 'https://api.paystack.co/transaction/verify/{}'.format(refrence)
@@ -66,6 +68,7 @@ def verify_payment(refrence):
         return str(response.status_code)
 
     return response.json()
+
 
 def create_subaccount(business_name, settlement_bank, account_number, percentage_charge):
     url = 'https://api.paystack.co/subaccount'
@@ -87,6 +90,7 @@ def create_subaccount(business_name, settlement_bank, account_number, percentage
         return response.json()
 
     return response.json()
+
 
 def update_subaccount(subaccount_code, business_name, settlement_bank, account_number):
     url = 'https://api.paystack.co/subaccount/{}'.format(subaccount_code)

@@ -96,6 +96,7 @@ class Gaschek_Device(models.Model):
     alarm = models.CharField(choices=choices, max_length=10, default="off")
     call = models.CharField(choices=choices, max_length=10, default="off")
     text = models.CharField(choices=choices, max_length=10, default="off")
+    indicator = models.CharField(choices=choices, max_length=10, default="off")
     cylinder = models.CharField(max_length=10, default="0kg")
     gas_mass = models.FloatField(max_length=10, default="0")
     gas_level = models.IntegerField(default=0)
@@ -133,6 +134,24 @@ class Gas_Dealer(models.Model):
 
     def __str__(self):
         return self.company_name
+
+class Cylinder_Price(models.Model):
+    gas_dealer = models.ForeignKey(Gas_Dealer, on_delete=models.CASCADE)
+    cylinder = models.DecimalField(decimal_places=1, max_digits=10)
+    price = models.IntegerField()
+
+    class Meta:
+        ordering = ['gas_dealer']
+
+    def __str__(self):
+        return "{} {}kg NGN {}".format(self.gas_dealer, self.cylinder, self.price)
+
+class Delivery_Fee(models.Model):
+    gas_dealer = models.ForeignKey(Gas_Dealer, on_delete=models.CASCADE)
+    price = models.IntegerField()
+
+    def __str__(self):
+        return "{} delivery fee".format(self.gas_dealer)
 
 class Abandoned_Subaccounts(models.Model):
     company_name = models.CharField(max_length=50)

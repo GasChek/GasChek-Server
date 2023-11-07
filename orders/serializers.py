@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .models import Cylinder_Price, Gas_orders
-
+from .models import Gas_orders
+from accounts.models import Cylinder_Price
 
 class Cylinder_Price_Serializer(serializers.ModelSerializer):
     class Meta:
