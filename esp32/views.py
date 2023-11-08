@@ -11,7 +11,7 @@ from fcm_django.models import FCMDevice
 from functions.notification import Notification
 import json
 
-from django.http import StreamingHttpResponse
+from django.http import StreamingHttpResponse, JsonResponse
 import asyncio
 from django.views.generic import View
 from django.views.decorators.csrf import csrf_exempt
@@ -21,11 +21,12 @@ from asgiref.sync import sync_to_async
 
     
 ######## UPDATE CYLINDER DETAILS COMING FROM DEVICE TO DATABASE
-@method_decorator(gzip_page, name='dispatch')
-class Update_esp32_details(APIView):
-    def post(self, request):
+@method_decorator(csrf_exempt, name='dispatch')
+class Update_esp32_details(View):
+    async def post(self, request):
         try:
-            user = User.objects.get(id=request.data["user_id"])
+            payload = json.loads(request.body.decode('utf-8'))
+            user = await sync_to_async(User.objects.get)(id=payload["user_id"])
 
             if not user:
                 return Response({
@@ -33,30 +34,25 @@ class Update_esp32_details(APIView):
                     "message": "Invalid user"
                 })
 
-            if ('cylinder' not in request.data and
-                'gas_mass' not in request.data and
-                'gas_level' not in request.data and
-                'battery_level' not in request.data and 
-                'indicator' not in request.data):
-                return Response({
+            if ('cylinder' not in payload and
+                'gas_mass' not in payload and
+                'gas_level' not in payload and
+                'battery_level' not in payload and 
+                'indicator' not in payload):
+                return JsonResponse({
                     "status": 400,
                 })
                 
-            gaschek_device = Gaschek_Device.objects.get(user=user)
+            gaschek_device = await sync_to_async(Gaschek_Device.objects.get)(user=user)
+            
+            gaschek_device.cylinder = payload['cylinder']
+            gaschek_device.gas_mass = payload['gas_mass']
+            gaschek_device.gas_level = payload['gas_level']
+            gaschek_device.battery_level = payload['battery_level']
+            gaschek_device.indicator = payload['indicator']
+            await sync_to_async(gaschek_device.save)()
 
-            gaschek_device.cylinder = request.data.get(
-                'cylinder', gaschek_device.cylinder)
-            gaschek_device.gas_mass = request.data.get(
-                'gas_mass', gaschek_device.gas_mass)
-            gaschek_device.gas_level = request.data.get(
-                'gas_level', gaschek_device.gas_level)
-            gaschek_device.battery_level = request.data.get(
-                'battery_level', gaschek_device.battery_level)
-            gaschek_device.indicator = request.data.get(
-                'indicator', gaschek_device.indicator)
-            gaschek_device.save()
-
-            return Response({
+            return JsonResponse({
                 'status': 200,
             })
         except Exception as e:
@@ -170,7 +166,6 @@ async def stream(payload):
             data = {
                 'status': 400
             }
-            print(data)
             yield data
             break
         
@@ -189,8 +184,7 @@ async def stream(payload):
             'number_three': serializer2.data['phonenumber_gaschek_device_2'],
             'number_four': serializer2.data['phonenumber_gaschek_device_3']
         }
-        print(data)
-        yield data
+        yield json.dumps(data)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class Get_gaschek_details_SSE(View):
@@ -202,44 +196,3 @@ class Get_gaschek_details_SSE(View):
             content_type="text/event-stream"
         )
 
-# class Get_Leakage_Notification_Details(APIView):
-#     def get(self, request):
-#         try:
-#             payload = jwt_decoder(request.query_params['gaschek'])
-#             gaschek_device = Gaschek_Device.objects.get(user=payload['id'])
-#             leak = Gas_Leakage.objects.filter(gaschek_device=gaschek_device)
-
-#             return Response({
-#                 'status': 200,
-#                 'data': len(leak)
-#             })
-#         except Exception:
-#             return Response({
-#                 'status': 400,
-#                 'message': 'Unauthenticated'
-#             })
-
-
-# class Reset_GasChek_device(APIView):
-#     def post(self, request):
-#         payload = jwt_decoder(request.data['token'])
-#         user = User.objects.get(id=payload['id'])
-
-#         if not user:
-#             return Response({
-#                 "status": 400,
-#                 "message": "Invalid user"
-#             })
-
-#         gaschek_device = Gaschek_Device.objects.get(user=user)
-#         gaschek_device.gas_level = 0
-#         gaschek_device.gas_mass = 0
-#         gaschek_device.cylinder = '0kg'
-#         gaschek_device.save()
-
-#         serializer = Gaschek_Device_Serializer(gaschek_device)
-
-#         return Response({
-#             'status': 200,
-#             'data': serializer.data
-#         })
