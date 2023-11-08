@@ -172,7 +172,7 @@ async def stream(payload):
         # serializer = await sync_to_async(Gaschek_Get_Serializer)(gaschek_device)
         # serializer2 = await sync_to_async(UserSerializer)(user)
 
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(0.5)
         data = {
             'call': gaschek_device.call,
             'alarm': gaschek_device.alarm,
