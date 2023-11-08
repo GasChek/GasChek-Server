@@ -169,20 +169,20 @@ async def stream(payload):
             yield data
             break
         
-        serializer = await sync_to_async(Gaschek_Get_Serializer)(gaschek_device)
-        serializer2 = await sync_to_async(UserSerializer)(user)
+        # serializer = await sync_to_async(Gaschek_Get_Serializer)(gaschek_device)
+        # serializer2 = await sync_to_async(UserSerializer)(user)
 
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.2)
         data = {
-            'call': serializer.data['call'],
-            'alarm': serializer.data['alarm'],
-            'text': serializer.data['text'],
-            'indicator': serializer.data['indicator'],
-            'country_code': serializer2.data['country_code'],
-            'number_one': serializer2.data['phonenumber_ordering'],
-            'number_two': serializer2.data['phonenumber_gaschek_device_1'],
-            'number_three': serializer2.data['phonenumber_gaschek_device_2'],
-            'number_four': serializer2.data['phonenumber_gaschek_device_3']
+            'call': gaschek_device.call,
+            'alarm': gaschek_device.alarm,
+            'text': gaschek_device.text,
+            'indicator': gaschek_device.indicator,
+            'country_code': user.country_code,
+            'number_one': user.phonenumber_ordering,
+            'number_two': user.phonenumber_gaschek_device_1,
+            'number_three': user.phonenumber_gaschek_device_2,
+            'number_four': user.phonenumber_gaschek_device_3
         }
         yield json.dumps(data)
 
