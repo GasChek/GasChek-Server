@@ -19,7 +19,7 @@ def generate_random_text(length=10):
     characters = string.ascii_letters + string.digits
     random_text = ''.join(random.choice(characters) for i in range(length))
     return random_text
-
+        
 def connect_to_mqtt_broker(topic):
     client = paho.Client(client_id=f'mqtt-server-client {generate_random_text(10)}', userdata=None, protocol=paho.MQTTv5)
     client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
@@ -91,8 +91,6 @@ class GasDetailsConsumer(WebsocketConsumer):
                         device.battery_level = device_data["battery_level"]
                         device.indicator = device_data["indicator"]
                         device.save()
-
-
                 self.client.on_message = on_message
                 self.client.loop_start()
 

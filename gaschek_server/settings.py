@@ -26,7 +26,7 @@ SECRET_KEY = os.getenv('SERVER_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = ['localhost', '192.168.43.152']
 
 # Application definition
 INSTALLED_APPS = [
@@ -170,6 +170,8 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:3001',
     'https://gaschek.netlify.app',
     'https://gaschekadmin.netlify.app',
+    'http://192.168.43.152:8000',
+    'http://192.168.43.152:3000'
 ]
 PAYSTACK_SAFE_IPS = [
     # Paystack
@@ -179,10 +181,11 @@ PAYSTACK_SAFE_IPS = [
 ]
 CORS_ORIGIN_WHITELIST = [
     'https://gaschek.netlify.app',
+    'http://192.168.43.152:8000'
 ]
 CSRF_TRUSTED_ORIGINS = [
     'https://gaschek.herokuapp.com',
-    'https://c09e-102-89-33-22.ngrok-free.app'
+    'http://192.168.43.152:8000'
 ]
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # SECURE_SSL_REDIRECT = True
