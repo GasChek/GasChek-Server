@@ -1,11 +1,9 @@
 import json
-from .serializers import Gaschek_Device_Serializer, Gaschek_Get_Serializer
-from accounts.serializers import UserSerializer
+from .serializers import Gaschek_Device_Serializer
 from accounts.models import Gaschek_Device, User
-from channels.generic.websocket import AsyncWebsocketConsumer, WebsocketConsumer
+from channels.generic.websocket import WebsocketConsumer
 from django.db.models.signals import post_save
 from functions.encryption import jwt_decoder, encrypt, decrypt
-from asgiref.sync import sync_to_async
 # MQTT
 import paho.mqtt.client as paho
 from paho import mqtt
@@ -84,7 +82,16 @@ class GasDetailsConsumer(WebsocketConsumer):
   
             def receive_data_from_mqtt():
                 def on_message(client, userdata, msg):
-                    print(f"Received message '{msg.payload.decode()}' on topic '{msg.topic}' with QoS {msg.qos}")
+                    device_data = json.loads(msg.payload.decode('utf-8'))
+                    if "cylinder" in device_data:
+                        device = get_device()
+                        device.cylinder = device_data["cylinder"]
+                        device.gas_mass = device_data["gas_mass"]
+                        device.gas_level = device_data["gas_level"]
+                        device.battery_level = device_data["battery_level"]
+                        device.indicator = device_data["indicator"]
+                        device.save()
+
 
                 self.client.on_message = on_message
                 self.client.loop_start()

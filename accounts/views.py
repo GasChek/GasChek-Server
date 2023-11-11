@@ -202,7 +202,8 @@ class UpdateUserAPI(APIView):
                 'status': 200,
                 'data': serializer.data,
             })))
-        except Exception:
+        except Exception as e:
+            print(e)
             return Response(encrypt(json.dumps({
                 'status': 400,
                 'message': 'Unauthenticated'
