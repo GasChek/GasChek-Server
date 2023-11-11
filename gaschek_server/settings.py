@@ -26,13 +26,12 @@ SECRET_KEY = os.getenv('SERVER_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['localhost']
 
 # Application definition
 INSTALLED_APPS = [
     'daphne',
     'channels',
-    'celery',
     "fcm_django",
     'django.contrib.admin',
     'django.contrib.auth',
@@ -195,6 +194,8 @@ EMAIL_PORT = 465
 EMAIL_HOST_USER = 'gaschektechnology@gmail.com'
 EMAIL_HOST_PASSWORD = 'wpjzmukkuxrrgmcn'
 EMAIL_USE_SSL = True
+
+
 
 # prod_db = dj_database_url.config(conn_max_age=500)
 # DATABASES['default'].update(prod_db)
