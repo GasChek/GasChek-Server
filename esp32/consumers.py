@@ -21,7 +21,7 @@ def generate_random_text(length=10):
     return random_text
         
 def connect_to_mqtt_broker(topic):
-    client = paho.Client(client_id=f'mqtt-server-client {generate_random_text(10)}', userdata=None, protocol=paho.MQTTv5)
+    client = paho.Client(client_id=f'mqtt-GasChek-client-{generate_random_text}', userdata=None, protocol=paho.MQTTv5)
     client.tls_set(tls_version=mqtt.client.ssl.PROTOCOL_TLS)
     client.username_pw_set(str(os.getenv('MQTT_USER')), str(os.getenv('MQTT_PASSWORD')))
     client.connect(str(os.getenv('MQTT_SERVER_URL')), int(os.getenv('MQTT_PORT')))
@@ -94,7 +94,7 @@ class GasDetailsConsumer(WebsocketConsumer):
                 self.client.on_message = on_message
                 self.client.loop_start()
 
-            if client_data["action"] == 'cnt':
+            if client_data["action"] == 0:
                 receive_data_from_mqtt()
                 send_data()
 

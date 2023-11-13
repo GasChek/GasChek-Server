@@ -16,11 +16,13 @@ from external_api.paystack import create_subaccount, update_subaccount
 import os
 from dotenv import load_dotenv
 from django.core.exceptions import ObjectDoesNotExist
-
+from django.utils.decorators import method_decorator
+from django.views.decorators.gzip import gzip_page
 load_dotenv()
 JWT_KEY = os.getenv('JWT_KEY')
 
 # CHECK IF ACCOUNT IS USER OR GAS DEALER
+@method_decorator(gzip_page, name='dispatch')
 class AccountViewAPI(APIView):
     def get(self, request):
         try:
@@ -45,6 +47,7 @@ class AccountViewAPI(APIView):
 # CHECK IF ACCOUNT IS USER OR GAS DEALER
 
 # USER
+@method_decorator(gzip_page, name='dispatch')
 class LoginAPI(APIView):
     def post(self, request):
         try:
@@ -105,6 +108,7 @@ class LoginAPI(APIView):
             })
 
 
+@method_decorator(gzip_page, name='dispatch')
 class ChangePasswordAPI(APIView):
     def post(self, request):
         try:
@@ -139,6 +143,7 @@ class ChangePasswordAPI(APIView):
                 "message": "Something went wrong",
             })
 
+@method_decorator(gzip_page, name='dispatch')
 class UserViewAPI(APIView):
     def get(self, request):
         try:
@@ -158,6 +163,7 @@ class UserViewAPI(APIView):
             })
 
 
+@method_decorator(gzip_page, name='dispatch')
 class UpdateUserAPI(APIView):
     def post(self, request):
         try:
@@ -211,6 +217,7 @@ class UpdateUserAPI(APIView):
 # USER
 
 # DEALER
+@method_decorator(gzip_page, name='dispatch')
 class CreateGasDealerAPI(APIView):
     def post(self, request):
         user = User.objects.filter(email=request.data['email']).first()
@@ -318,6 +325,7 @@ class CreateGasDealerAPI(APIView):
         })
 
 
+@method_decorator(gzip_page, name='dispatch')
 class Verify_Otp(APIView):
     def post(self, request):
         user = User.objects.get(email=request.data['email'])
@@ -350,6 +358,7 @@ class Verify_Otp(APIView):
         })
 
 
+@method_decorator(gzip_page, name='dispatch')
 class Resend_Otp(APIView):
     def post(self, request):
         user = User.objects.get(email=request.data['email'])
@@ -361,6 +370,7 @@ class Resend_Otp(APIView):
         })
 
     
+@method_decorator(gzip_page, name='dispatch')
 class Dealer_LoginAPI(APIView):
     def post(self, request):
         try:
@@ -421,6 +431,7 @@ class Dealer_LoginAPI(APIView):
             })
 
 
+@method_decorator(gzip_page, name='dispatch')
 class GasDealerViewAPI(APIView):
     def get(self, request):
         try:
@@ -440,6 +451,7 @@ class GasDealerViewAPI(APIView):
             })
 
 
+@method_decorator(gzip_page, name='dispatch')
 class GetGasDealerAPI(APIView):
     def get(self, request):
         try:
@@ -466,6 +478,7 @@ class GetGasDealerAPI(APIView):
             })))
 
 
+@method_decorator(gzip_page, name='dispatch')
 class Update_GasDealer_details(APIView):
     def post(self, request):
         try:
