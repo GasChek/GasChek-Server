@@ -4,20 +4,23 @@ from .serializers import (LogInSerializer,
                           DealerLogInSerializer,
                           UserSerializer,
                           GasDealerSerializer)
-from .models import User, Gas_Dealer, Token, Abandoned_Subaccounts, Cylinder_Price, Delivery_Fee
+from .models import (User, Gas_Dealer, 
+                     Token, Abandoned_Subaccounts, 
+                     Cylinder_Price, Delivery_Fee)
 from orders.serializers import (Cylinder_Price_Serializer,
                                 Delivery_Fee_Serializer)
-import jwt, json
-import datetime
 from django.contrib.auth.models import update_last_login
-from functions.emails import HandleEmail
+from functions.emails import HandleEmail, HandleEmail_User
 from functions.encryption import jwt_decoder, encrypt
 from external_api.paystack import create_subaccount, update_subaccount
-import os
-from dotenv import load_dotenv
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.decorators import method_decorator
 from django.views.decorators.gzip import gzip_page
+from dotenv import load_dotenv
+import os
+import jwt
+import json
+import datetime
 load_dotenv()
 JWT_KEY = os.getenv('JWT_KEY')
 
@@ -72,10 +75,17 @@ class LoginAPI(APIView):
                         'message': 'Invaild username or password'
                     })
                 
-                if user.is_verified is False:
+                if user.is_verified is False and user.verified_email is False:
                     return Response({
                         'status': 201,
-                        'message': 'Change password',
+                        'msg': 'email',
+                        'username': user.usernames
+                    })
+                  
+                if user.is_verified is False and user.verified_email:
+                    return Response({
+                        'status': 201,
+                        'msg': 'changep',
                         'username': user.usernames
                     })
 
@@ -101,13 +111,49 @@ class LoginAPI(APIView):
                     'message': 'Invaild username or password',
                     # 'data': serializer.errors
                 })
-        except Exception:
+        except Exception as e:
+            print(e)
             return Response({
                 'status': 400,
                 'message': 'Something went wrong, try again later'
             })
 
-
+@method_decorator(gzip_page, name='dispatch')
+class ConnectEmailAPI(APIView):
+    def post(self, request):
+        try:
+            try:
+                user = User.objects.get(usernames=request.data['username'])
+            except ObjectDoesNotExist:
+                return Response({
+                    'status': 400,
+                    'message':'Invaild user',
+                })
+            try:
+                user = User.objects.get(email=request.data['email'])
+                if user.verified_email is True:
+                    return Response({
+                        "status": 400,
+                        "msg": "Email already exists"
+                    })
+            except ObjectDoesNotExist:
+                user.email = request.data['email']
+                user.save()
+                token = Token.objects.filter(user=user).first()
+                def run(action):
+                    HandleEmail_User(user.email, action).start()
+                if token:
+                    run("update")
+                else:
+                    run("create")
+                return Response({
+                    'status': 200
+                })
+        except Exception:
+            return Response({
+                "status": 400
+            })
+        
 @method_decorator(gzip_page, name='dispatch')
 class ChangePasswordAPI(APIView):
     def post(self, request):
@@ -328,15 +374,20 @@ class CreateGasDealerAPI(APIView):
 @method_decorator(gzip_page, name='dispatch')
 class Verify_Otp(APIView):
     def post(self, request):
-        user = User.objects.get(email=request.data['email'])
-
-        if not user or user.is_verified is True:
+        try:
+            user = User.objects.get(email=request.data['email'])
+            if user.is_verified is True:
+                return Response({
+                    'status': 400,
+                    'message': 'Invaild email'
+                })
+        except ObjectDoesNotExist:
             return Response({
                 'status': 400,
                 'message': 'Invaild email'
             })
 
-        token = Token.objects.get(user=user)
+        token = Token.objects.filter(user=user).first()
         if not token:
             return Response({
                 'status': 400,
@@ -348,14 +399,23 @@ class Verify_Otp(APIView):
                 'status': 400,
                 'message': 'Invaild otp'
             })
-        gas_dealer = Gas_Dealer.objects.filter(user=user).first()
-        user.is_verified = True
-        gas_dealer.is_verified = True
-        user.save()
-        gas_dealer.save()
-        return Response({
-            'status': 200,
-        })
+        
+        response = None
+        response['status'] = 200 
+
+        if user.is_dealer:
+            gas_dealer = Gas_Dealer.objects.filter(user=user).first()
+            user.is_verified = True
+            gas_dealer.is_verified = True
+            user.save()
+            gas_dealer.save()
+            response['type'] = 'dealer'
+        else:
+            user.verified_email = True
+            user.save()
+            response['type'] = 'user'
+
+        return Response(response)
 
 
 @method_decorator(gzip_page, name='dispatch')

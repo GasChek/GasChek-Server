@@ -49,6 +49,7 @@ class User(AbstractUser):
     is_connected_with_device = models.BooleanField(default=False)
     is_dealer = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
+    verified_email = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
