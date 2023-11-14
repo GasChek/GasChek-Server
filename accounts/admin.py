@@ -3,8 +3,8 @@ from .models import User, Gas_Dealer, Token, Gaschek_Device, Abandoned_Subaccoun
 # Register your models here.
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ['id', 'usernames', 'email', 'firstname', 'lastname', 'created_at', 'updated_at']
-    search_fields = ['id', 'email', 'firstname', 'lastname']
+    list_display = ['id', 'usernames', 'email', 'first_name', 'last_name', 'created_at', 'updated_at']
+    search_fields = ['id', 'email', 'first_name', 'last_name']
     
 class Gaschek_DeviceAdmin(admin.ModelAdmin):
     list_display = ['id', 'user','alarm', 'call', 

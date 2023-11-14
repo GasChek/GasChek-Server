@@ -9,15 +9,15 @@ class Cylinder_Price_Serializer(serializers.ModelSerializer):
 
 
 class Order_Serializer(serializers.ModelSerializer):
-    firstname = serializers.CharField(source='user.firstname')
-    lastname = serializers.CharField(source='user.lastname')
+    first_name = serializers.CharField(source='user.first_name')
+    last_name = serializers.CharField(source='user.last_name')
     address = serializers.CharField(source='user.address')
     company_name = serializers.CharField(source='gas_dealer.company_name')
     phonenumber = serializers.CharField(source='gas_dealer.phonenumber')
 
     class Meta:
         model = Gas_orders
-        fields = ['id', 'cylinder', 'price', 'delivery', 'firstname', 'lastname',
+        fields = ['id', 'cylinder', 'price', 'delivery', 'first_name', 'last_name',
                   'address', 'phonenumber', 'company_name', 'created_at', 'dealer_confirmed',
                   'user_confirmed']
 

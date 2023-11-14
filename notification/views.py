@@ -28,7 +28,7 @@ class Register_Push_Notification(APIView):
             
             #this will replace details if the token already exists in the database
             if fcm:
-                fcm.name = user.firstname
+                fcm.name = user.first_name
                 fcm.user_id = payload['id']
                 fcm.device_id = request.data['device_id']
                 fcm.save()

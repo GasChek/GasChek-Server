@@ -21,8 +21,8 @@ class PaymentAPI(APIView):
 
         if (not user.email or
             len(user.email) == 0 or
-            len(user.firstname) == 0 or
-            len(user.lastname) == 0 or
+            len(user.first_name) == 0 or
+            len(user.last_name) == 0 or
             len(user.address) == 0 or
             len(user.phonenumber_ordering) == 0 or
                 len(user.state) == 0):

@@ -186,8 +186,8 @@ class UpdateUserAPI(APIView):
                 })
             
             user.email = request.data.get('email', user.email)
-            user.firstname = request.data.get('firstname', user.firstname)
-            user.lastname = request.data.get('lastname', user.lastname)
+            user.first_name = request.data.get('first_name', user.first_name)
+            user.last_name = request.data.get('last_name', user.last_name)
             user.country_code = request.data.get('country_code', user.country_code)
             user.phonenumber_ordering = request.data.get(
                 'phonenumber_ordering', user.phonenumber_ordering)
