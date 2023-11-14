@@ -20,6 +20,7 @@ class GasDetailsConsumer(WebsocketConsumer):
         super().__init__(*args, **kwargs)
         self.token_id = None
         self.client = None
+        self.client_data = None
 
     def connect(self):
         try:
@@ -32,24 +33,26 @@ class GasDetailsConsumer(WebsocketConsumer):
             self.close()
 
     def disconnect(self, close_code):
-        post_save.disconnect(self.device_save, sender=Gaschek_Device)
-        post_save.disconnect(self.user_save, sender=User)
-        self.client.unsubscribe(str(self.token_id))
-        self.client.loop_stop()
+        if self.client_data:
+            post_save.disconnect(self.device_save, sender=Gaschek_Device)
+            post_save.disconnect(self.user_save, sender=User)
+        if self.client:
+            self.client.unsubscribe(str(self.token_id))
+            self.client.loop_stop()
         self.close()
 
     def receive(self, bytes_data):
         try:
             convert_byte_to_text = bytes_data.decode('utf-8')
             decrypted_text_data = decrypt(convert_byte_to_text)
-            client_data = json.loads(decrypted_text_data)
+            self.client_data = json.loads(decrypted_text_data)
 
-            if client_data["action"] == 0:
+            if self.client_data["action"] == 0:
                 self.receive_data_from_mqtt()
                 self.send_data()
                 self.setup_signals()
             else:
-                self.handle_client_action(client_data)
+                self.handle_client_action(self.client_data)
 
         except Exception:
             self.send(bytes_data=encrypt(json.dumps({
@@ -113,6 +116,7 @@ class GasDetailsConsumer(WebsocketConsumer):
     def receive_data_from_mqtt(self):
         def on_message(client, userdata, msg):
             device_data = json.loads(msg.payload.decode('utf-8'))
+
             if "cylinder" in device_data:
                 device = self.get_device()
                 device.cylinder = device_data["cylinder"]
