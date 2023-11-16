@@ -131,7 +131,7 @@ class ConnectEmailAPI(APIView):
                 })
             try:
                 user = User.objects.get(email=request.data['email'])
-                if user.verified_email is True:
+                if user.verified_email is True or user.is_dealer:
                     return Response({
                         "status": 400,
                         "msg": "Email already exists"
@@ -146,9 +146,9 @@ class ConnectEmailAPI(APIView):
                     run("update")
                 else:
                     run("create")
-                return Response({
-                    'status': 200
-                })
+            return Response({
+                'status': 200
+            })
         except Exception:
             return Response({
                 "status": 400
@@ -188,6 +188,53 @@ class ChangePasswordAPI(APIView):
                 "status": 400,
                 "message": "Something went wrong",
             })
+
+
+@method_decorator(gzip_page, name='dispatch')
+class ForgotPasswordAPI(APIView):
+    def post(self, request):
+        try:
+            user = User.objects.get(email=request.data['email'])
+            HandleEmail_User(user.email, 'update').start()
+            return Response({
+                'status': 200,
+                'msg': user.email
+            })
+        except ObjectDoesNotExist:
+            return Response({
+                'status': 400,
+                'msg': 'Invalid email'
+            })
+        
+@method_decorator(gzip_page, name='dispatch')
+class VerifyOtpUserAPI(APIView):
+    def post(self, request):
+        if request.data['p'] != request.data['p2']:
+            return Response({
+                'status': 400,
+                'msg': 'Password does not match'
+            })
+        try:
+            user = User.objects.get(email=request.data['email'])
+        except ObjectDoesNotExist:
+            return Response({
+                'status': 400,
+                'msg': 'error'
+            })
+        token = Token.objects.get(user=user)
+        if int(token.otp) == int(request.data['otp']): 
+            user.set_password(request.data['p'])
+            user.save()
+            return Response({
+                'status': 200,
+            })
+        else:
+            return Response({
+                'status': 400,
+                'msg': 'Inalid otp'
+            })
+         
+
 
 @method_decorator(gzip_page, name='dispatch')
 class UserViewAPI(APIView):
@@ -400,7 +447,7 @@ class Verify_Otp(APIView):
                 'message': 'Invaild otp'
             })
         
-        response = None
+        response = {}
         response['status'] = 200 
 
         if user.is_dealer:
