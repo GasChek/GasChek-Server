@@ -1,4 +1,3 @@
-import json
 from .serializers import Gaschek_Device_Serializer
 from accounts.models import Gaschek_Device, User
 from channels.generic.websocket import WebsocketConsumer
@@ -11,21 +10,18 @@ from dotenv import load_dotenv
 import os
 import random
 import string
+import json
 load_dotenv()
 # MQTT
 
 
 class GasDetailsConsumer(WebsocketConsumer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.token_id = None
-        self.client = None
-        self.client_data = None
-
     def connect(self):
         try:
             token = self.scope['query_string'].decode('utf-8')
             payload = jwt_decoder(token)
+            self.client_data = None
+            self.client = None
             self.token_id = payload['id']
             self.client = self.connect_to_mqtt_broker(self.token_id)
             self.accept()
@@ -77,7 +73,7 @@ class GasDetailsConsumer(WebsocketConsumer):
              
     def send_data(self):
         serializer = Gaschek_Device_Serializer(self.get_device())
-        encrypted_data = encrypt(json.dumps(serializer.data))
+        encrypted_data = encrypt(json.dumps(serializer.data))        
 
         data = encrypt(json.dumps({
             'msg': encrypted_data
