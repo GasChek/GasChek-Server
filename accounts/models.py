@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db.models.signals import post_save
-# Create your models here.
-
 
 class CustomAccountManager(BaseUserManager):
     def create_superuser(self, email, password, **other_fields):

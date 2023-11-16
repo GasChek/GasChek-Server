@@ -470,8 +470,10 @@ class Resend_Otp(APIView):
     def post(self, request):
         user = User.objects.get(email=request.data['email'])
 
-        HandleEmail(user, "update").start()
-
+        if user.is_dealer:
+            HandleEmail(user, "update").start()
+        else:
+            HandleEmail_User(user.email, 'update').start()
         return Response({
             'status': 200,
         })
