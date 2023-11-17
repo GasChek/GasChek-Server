@@ -231,7 +231,7 @@ class VerifyOtpUserAPI(APIView):
         else:
             return Response({
                 'status': 400,
-                'msg': 'Inalid otp'
+                'msg': 'Invalid otp'
             })
          
 

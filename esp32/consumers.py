@@ -30,8 +30,7 @@ class GasDetailsConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code):
         if self.client_data:
-            post_save.disconnect(self.device_save, sender=Gaschek_Device)
-            post_save.disconnect(self.user_save, sender=User)
+            self.disconnect_signals()
         if self.client:
             self.client.unsubscribe(str(self.token_id))
             self.client.loop_stop()
@@ -87,6 +86,11 @@ class GasDetailsConsumer(WebsocketConsumer):
     def user_save(self, instance, **kwargs):
         if (instance.id == self.token_id):
             self.publish_data_to_mqtt()
+
+    def disconnect_signals(self):
+        print('disconnected')
+        post_save.disconnect(self.device_save, sender=Gaschek_Device)
+        post_save.disconnect(self.user_save, sender=User)
 
     def setup_signals(self):
         post_save.connect(self.device_save, sender=Gaschek_Device, weak=False)
