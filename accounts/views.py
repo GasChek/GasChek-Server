@@ -12,6 +12,7 @@ from orders.serializers import (Cylinder_Price_Serializer,
 from django.contrib.auth.models import update_last_login
 from functions.emails import HandleEmail, HandleEmail_User
 from functions.encryption import jwt_decoder, encrypt
+from functions.CustomQuery import get_if_exists
 from external_api.paystack import create_subaccount, update_subaccount
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.decorators import method_decorator
@@ -139,7 +140,7 @@ class ConnectEmailAPI(APIView):
             except ObjectDoesNotExist:
                 user.email = request.data['email']
                 user.save()
-                token = Token.objects.filter(user=user).first()
+                token = get_if_exists(Token, user=user)
                 def run(action):
                     HandleEmail_User(user.email, action).start()
                 if token:
@@ -269,8 +270,8 @@ class UpdateUserAPI(APIView):
                     "message": "Invalid user"
                 })
 
-            user_email = User.objects.filter(
-                email=request.data['email']).first()
+            user_email = get_if_exists(User,
+                email=request.data['email'])
 
             if user_email and user_email.id != user.id:
                 return Response({
@@ -313,7 +314,7 @@ class UpdateUserAPI(APIView):
 @method_decorator(gzip_page, name='dispatch')
 class CreateGasDealerAPI(APIView):
     def post(self, request):
-        user = User.objects.filter(email=request.data['email']).first()
+        user = get_if_exists(User, email=request.data['email'])
         
         if user:
             if user.is_verified is True:
@@ -322,16 +323,13 @@ class CreateGasDealerAPI(APIView):
                     'message': 'Email already exists',
                 })
             else:
-                gas_dealer = Gas_Dealer.objects.filter(
-                    user=user).first()
+                gas_dealer = get_if_exists(Gas_Dealer, user=user)
                 Abandoned_Subaccounts.objects.create(company_name=gas_dealer.company_name,
                                                     subaccount_code=gas_dealer.subaccount_code,
                                                     subaccount_id=gas_dealer.subaccount_id)
                 user.delete()
               
-        gas_dealer = Gas_Dealer.objects.filter(
-            company_name=request.data['company_name']).first()
-        
+        gas_dealer = get_if_exists(Gas_Dealer, company_name=request.data['company_name'])
         if gas_dealer:
             if gas_dealer.is_verified is True:
                 return Response({
@@ -339,8 +337,8 @@ class CreateGasDealerAPI(APIView):
                     'message': 'Company name already exists',
                 })
         
-        gas_dealer = Gas_Dealer.objects.filter(
-            phonenumber=request.data['phonenumber']).first()
+        gas_dealer = get_if_exists(Gas_Dealer,
+            phonenumber=request.data['phonenumber'])
         
         if gas_dealer:
             if gas_dealer.is_verified is True:
@@ -349,8 +347,8 @@ class CreateGasDealerAPI(APIView):
                     'message': 'Phonenumber already exists',
                 })
         
-        gas_dealer = Gas_Dealer.objects.filter(
-            account_number=request.data['account_number']).first()
+        gas_dealer = get_if_exists(Gas_Dealer,
+            account_number=request.data['account_number'])
         
         if gas_dealer:
             if gas_dealer.is_verified is True:
@@ -361,8 +359,8 @@ class CreateGasDealerAPI(APIView):
 
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
-            abandoned_subaccount = Abandoned_Subaccounts.objects.filter(
-                                    company_name=request.data['company_name']).first()
+            abandoned_subaccount = get_if_exists(Abandoned_Subaccounts,
+                                    company_name=request.data['company_name'])
 
             if abandoned_subaccount:
                 response = update_subaccount(abandoned_subaccount.subaccount_code, 
@@ -421,20 +419,14 @@ class CreateGasDealerAPI(APIView):
 @method_decorator(gzip_page, name='dispatch')
 class Verify_Otp(APIView):
     def post(self, request):
-        try:
-            user = User.objects.get(email=request.data['email'])
-            if user.is_verified is True:
-                return Response({
-                    'status': 400,
-                    'message': 'Invaild email'
-                })
-        except ObjectDoesNotExist:
+        user = get_if_exists(User, email=request.data['email'])
+        if not user or user.is_verified is True:
             return Response({
                 'status': 400,
                 'message': 'Invaild email'
             })
 
-        token = Token.objects.filter(user=user).first()
+        token = get_if_exists(Token, user=user)
         if not token:
             return Response({
                 'status': 400,
@@ -451,7 +443,7 @@ class Verify_Otp(APIView):
         response['status'] = 200 
 
         if user.is_dealer:
-            gas_dealer = Gas_Dealer.objects.filter(user=user).first()
+            gas_dealer = Gas_Dealer.objects.get(user=user)
             user.is_verified = True
             gas_dealer.is_verified = True
             user.save()

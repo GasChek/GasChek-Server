@@ -6,6 +6,7 @@ from accounts.models import User, Gas_Dealer, Cylinder_Price, Delivery_Fee
 from functions.encryption import jwt_decoder
 from external_api.paystack import initialize_payment
 from django.conf import settings
+from functions.CustomQuery import get_if_exists
 
 # Create your views here.
 
@@ -50,7 +51,7 @@ class PaymentAPI(APIView):
                 'message': 'Gas Dealer is inactive.'
             })
 
-        fee = Delivery_Fee.objects.filter(gas_dealer=dealer).first()
+        fee = get_if_exists(Delivery_Fee, gas_dealer=dealer)
         if not fee:
             return Response({
                 'status': 400,
@@ -68,7 +69,7 @@ class PaymentAPI(APIView):
 
             if (payment['status'] is True):
                 payment_object = Payment.objects.filter(
-                    reference=payment['data']['reference']).first()
+                    reference=payment['data']['reference'])
 
                 if not payment_object:
                     Payment.objects.create(user=user,

@@ -6,7 +6,7 @@ from functions.encryption import encrypt, decrypt
 import json
 import jwt
 import os 
-import traceback
+from functions.CustomQuery import get_if_exists
 from dotenv import load_dotenv
 load_dotenv()
 JWT_DECODE_KEY = os.getenv('JWT_KEY')
@@ -22,10 +22,9 @@ class Register_Push_Notification(APIView):
             )
             user = User.objects.get(id=payload['id'])
 
-            fcm = FCMDevice.objects.filter(
+            fcm = get_if_exists(FCMDevice,
                 registration_id=request.data['reg_id']
-            ).first()
-            
+            )
             #this will replace details if the token already exists in the database
             if fcm:
                 fcm.name = user.first_name

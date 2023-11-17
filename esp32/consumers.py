@@ -88,7 +88,6 @@ class GasDetailsConsumer(WebsocketConsumer):
             self.publish_data_to_mqtt()
 
     def disconnect_signals(self):
-        print('disconnected')
         post_save.disconnect(self.device_save, sender=Gaschek_Device)
         post_save.disconnect(self.user_save, sender=User)
 

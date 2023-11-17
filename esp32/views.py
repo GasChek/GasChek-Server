@@ -6,6 +6,7 @@ from accounts.models import Gaschek_Device
 from accounts.models import User
 from .models import Gas_Leakage
 from functions.encryption import jwt_decoder, encrypt
+from functions.CustomQuery import get_if_exists
 from rest_framework.pagination import LimitOffsetPagination
 from fcm_django.models import FCMDevice
 from functions.notification import Notification
@@ -63,7 +64,7 @@ class Update_esp32_details(View):
 class Get_gaschek_details(APIView):
     def get(self, request):
         user = User.objects.get(id=request.query_params['user_id'])
-        gaschek_device = Gaschek_Device.objects.filter(user=user).first()
+        gaschek_device = get_if_exists(Gaschek_Device, user=user)
 
         if not gaschek_device:
             return Response({

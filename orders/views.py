@@ -9,6 +9,7 @@ from .serializers import (Cylinder_Price_Serializer,
                           Order_Serializer,
                           Delivery_Fee_Serializer)
 from functions.encryption import jwt_decoder, encrypt
+from functions.CustomQuery import get_if_exists
 import json
 # Create your views here.
 
@@ -33,8 +34,8 @@ class Create_Cylinder_Price(APIView):
             user = User.objects.get(id=payload['id'])
             gas_dealer = Gas_Dealer.objects.get(user=user)
 
-            cylinder = Cylinder_Price.objects.filter(
-                gas_dealer=gas_dealer, cylinder=request.data["cylinder"]).first()
+            cylinder = get_if_exists(Cylinder_Price,
+                gas_dealer=gas_dealer, cylinder=request.data["cylinder"])
             if cylinder:
                 return Response(encrypt(json.dumps({
                     'status': 400,
@@ -112,7 +113,7 @@ class Create_Delivery_Fee(APIView):
             user = User.objects.get(id=payload['id'])
             gas_dealer = Gas_Dealer.objects.get(user=user)
 
-            fee = Delivery_Fee.objects.filter(gas_dealer=gas_dealer).first()
+            fee = get_if_exists(Delivery_Fee, gas_dealer=gas_dealer)
             if fee:
                 return Response(encrypt(json.dumps({
                     'status': 400,

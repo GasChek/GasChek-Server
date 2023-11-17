@@ -9,6 +9,7 @@ import jwt, datetime
 import os
 from dotenv import load_dotenv
 from functions.encryption import encrypt
+from functions.CustomQuery import get_if_exists
 from django.core.exceptions import ObjectDoesNotExist
 load_dotenv()
 JWT_KEY = os.getenv('JWT_KEY')
@@ -42,15 +43,9 @@ class AdminLoginAPI(APIView):
                 email = serializer.data['email']
                 password = serializer.data['password']
 
-                try:
-                    user = User.objects.get(email=email)
-                except ObjectDoesNotExist:
-                    return Response({
-                        'status': 400,
-                        'message': 'Invaild email or password'
-                    })
-
-                if (not user.check_password(password)
+                user = get_if_exists(User, email=email)
+                
+                if (not user or not user.check_password(password)
                         or user.is_superuser is False):
                     return Response({
                         'status': 400,
@@ -101,7 +96,7 @@ class List_Not_Connected_With_Device_UsersAPI(APIView, LimitOffsetPagination):
 class Verify_User_Connection_With_DeviceAPI(APIView):
     def post(self, request):
         try:
-            user = User.objects.filter(id=request.data['id']).first()
+            user = User.objects.get(id=request.data['id'])
             user.is_connected_with_device = True
             user.save()
 
