@@ -4,7 +4,7 @@ from orders.models import Gas_orders
 from orders.serializers import Order_Serializer
 from channels.generic.websocket import WebsocketConsumer
 from django.db.models.signals import post_save
-from functions.encryption import jwt_decoder, encrypt
+from functions.encryption import auth_decoder, encrypt
 
 class GasDealerOrdersConsumer(WebsocketConsumer):
     def connect(self):
@@ -16,14 +16,14 @@ class GasDealerOrdersConsumer(WebsocketConsumer):
     def receive(self, text_data):
         try:
             client_data = json.loads(text_data)
-            payload = jwt_decoder(client_data['cnt'])
+            payload = auth_decoder(client_data['cnt'])
             user = User.objects.get(id=payload['id'])
             gas_dealer = Gas_Dealer.objects.get(user=user)
             
             def send_data():
                 try:
                     orders = Gas_orders.objects.filter(
-                        gas_dealer=gas_dealer).order_by('created_at').reverse()
+                        gas_dealer=gas_dealer).order_by('-created_at')
                     user_pending = Gas_orders.objects.filter(
                         gas_dealer=gas_dealer, user_confirmed=False, dealer_confirmed=True)
                     dealer_pending = Gas_orders.objects.filter(

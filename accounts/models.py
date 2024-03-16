@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
-from django.db.models.signals import post_save
+# from django.db.models.signals import post_save
+# from functions.CustomQuery import generate_unique_code
 
 class CustomAccountManager(BaseUserManager):
     def create_superuser(self, email, password, **other_fields):
@@ -32,22 +33,15 @@ class CustomAccountManager(BaseUserManager):
 
 class User(AbstractUser):
     email = models.EmailField(
-        max_length=50, unique=True, null=True, blank=True)
+        max_length=50, unique=True, blank=True)
     first_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
-    usernames = models.CharField(
-        max_length=50, unique=True, null=True, blank=True)
     address = models.CharField(max_length=1000, blank=True)
     country_code = models.CharField(max_length=10, blank=True)
-    phonenumber_ordering = models.CharField(max_length=25, blank=True)
-    phonenumber_gaschek_device_1 = models.CharField(max_length=25, blank=True)
-    phonenumber_gaschek_device_2 = models.CharField(max_length=25, blank=True)
-    phonenumber_gaschek_device_3 = models.CharField(max_length=25, blank=True)
+    phonenumber = models.CharField(max_length=25, blank=True)
     state = models.CharField(max_length=25, blank=True)
-    is_connected_with_device = models.BooleanField(default=False)
     is_dealer = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
-    verified_email = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -57,25 +51,22 @@ class User(AbstractUser):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
-    class Meta:
-        ordering = ['usernames']
+    # @staticmethod
+    # def create_device_model(sender, instance, created, **kwargs):
+    #     if created:
+    #         if (instance.is_dealer is False and instance.is_staff is False):
+    #             device_id = generate_unique_code(Gaschek_Device)
+    #             Gaschek_Device.objects.create(user=instance, device_id=device_id)
 
-    @staticmethod
-    def create_device_model(sender, instance, created, **kwargs):
-        if created:
-            if (instance.is_dealer is False and instance.is_staff is False):
-                Gaschek_Device.objects.create(user=instance)
 
     def __str__(self):
         if self.is_staff:
-            return "{} ADMIN".format(self.email)
-        if self.is_dealer:
-            return "{}".format(self.email)
-        if self.is_dealer is False:
-            return "{}".format(self.usernames)
-
-
-post_save.connect(User.create_device_model, sender=User)
+            return f"{self.email} ADMIN"
+        elif self.is_dealer:
+            return f"{self.email} GAS DEALER"
+        else:
+            return f"{self.email} USER"
+# post_save.connect(User.create_device_model, sender=User)
 
 
 class Token(models.Model):
@@ -84,25 +75,6 @@ class Token(models.Model):
 
     def __str__(self):
         return str(self.user)
-
-
-class Gaschek_Device(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    choices = {
-        ("on", "on"),
-        ("off", "off")
-    }
-    alarm = models.CharField(choices=choices, max_length=10, default="off")
-    call = models.CharField(choices=choices, max_length=10, default="off")
-    text = models.CharField(choices=choices, max_length=10, default="off")
-    indicator = models.CharField(choices=choices, max_length=10, default="off")
-    cylinder = models.CharField(max_length=10, default="0kg")
-    gas_mass = models.FloatField(max_length=10, default="0")
-    gas_level = models.IntegerField(default=0)
-    battery_level = models.IntegerField(default=0)
-        
-    def __str__(self):
-        return "{} Device".format(self.user.usernames)
 
 
 class Gas_Dealer(models.Model):
@@ -143,14 +115,14 @@ class Cylinder_Price(models.Model):
         ordering = ['gas_dealer']
 
     def __str__(self):
-        return "{} {}kg NGN {}".format(self.gas_dealer, self.cylinder, self.price)
+        return f"{self.gas_dealer} {self.cylinder}kg NGN {self.price}"
 
 class Delivery_Fee(models.Model):
     gas_dealer = models.ForeignKey(Gas_Dealer, on_delete=models.CASCADE)
     price = models.IntegerField()
 
     def __str__(self):
-        return "{} delivery fee".format(self.gas_dealer)
+        return f"{self.gas_dealer} delivery fee"
 
 class Abandoned_Subaccounts(models.Model):
     company_name = models.CharField(max_length=50)

@@ -26,7 +26,10 @@ SECRET_KEY = os.getenv('SERVER_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = ['localhost', '192.168.43.152']
+ALLOWED_HOSTS = ['localhost', 
+                 '192.168.43.152',
+                 'strangely-cheerful-lion.ngrok-free.app'
+                 ]
 
 # Application definition
 INSTALLED_APPS = [
@@ -42,11 +45,13 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'gaschek_server',
-    'esp32',
+    'device',
+    'mqtt',
     'client_admin',
     'accounts',
     'orders',
     'payment',
+    'notification'
 ]
 
 # firebase
@@ -110,7 +115,8 @@ ASGI_APPLICATION = 'gaschek_server.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DATABASE_NAME'),
+        # 'NAME': os.getenv('DATABASE_NAME'),
+        'NAME': 'gaschekdb',
         'USER': 'postgres',
         'PASSWORD': os.getenv('DATABASE_PASSWORD'),
         'HOST': 'localhost',
@@ -172,7 +178,8 @@ CORS_ALLOWED_ORIGINS = [
     'https://gaschek.netlify.app',
     'https://gaschekadmin.netlify.app',
     'http://192.168.43.152:8000',
-    'http://192.168.43.152:3000'
+    'http://192.168.43.152:3000',
+    'https://strangely-cheerful-lion.ngrok-free.app'
 ]
 PAYSTACK_SAFE_IPS = [
     # Paystack

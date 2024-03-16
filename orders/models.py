@@ -18,5 +18,5 @@ class Gas_orders(models.Model):
         ordering = ['user']
 
     def __str__(self):
-        return "{} order".format(self.user)
+        return f"{self.user} order"
 

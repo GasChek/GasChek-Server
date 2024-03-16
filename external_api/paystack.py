@@ -31,17 +31,17 @@ def initialize_payment(email, price, fee, subaccount_code, callback_url, cylinde
                 {
                     "display_name": "Cylinder",
                     "variable_name": "Cylinder",
-                    "value": "{} kg".format(cylinder)
+                    "value": f"{cylinder} kg"
                 },
                 {
                     "display_name": "Price",
                     "variable_name": "Price",
-                    "value": "NGN {}".format(price)
+                    "value": f"NGN {price}"
                 },
                 {
                     "display_name": "Delivery fee",
                     "variable_name": "Delivery fee",
-                    "value": "NGN {}".format(fee)
+                    "value": f"NGN {fee}"
                 },
             ]
         }
@@ -55,7 +55,7 @@ def initialize_payment(email, price, fee, subaccount_code, callback_url, cylinde
 
 
 def verify_payment(refrence):
-    url = 'https://api.paystack.co/transaction/verify/{}'.format(refrence)
+    url = f'https://api.paystack.co/transaction/verify/{refrence}'
     headers = {
         'Authorization': PAYSTACK_SECRET_KEY,
         'Content-Type': 'application/json',
@@ -93,7 +93,7 @@ def create_subaccount(business_name, settlement_bank, account_number, percentage
 
 
 def update_subaccount(subaccount_code, business_name, settlement_bank, account_number):
-    url = 'https://api.paystack.co/subaccount/{}'.format(subaccount_code)
+    url = f'https://api.paystack.co/subaccount/{subaccount_code}'
     headers = {
         'Authorization': PAYSTACK_SECRET_KEY,
         'Content-Type': 'application/json',

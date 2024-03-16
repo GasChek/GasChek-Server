@@ -23,7 +23,7 @@ admin.site.index_title = "GasChek"
 urlpatterns = [
     path('admin/gaschek-administration/999/', admin.site.urls),
     path('admin/gaschek-admin/888/', include('client_admin.urls')),
-    path('esp32/', include('esp32.urls')),
+    path('device/', include('device.urls')),
     path('accounts/', include('accounts.urls')),
     path('dealers/', include('orders.urls')),
     path('payment/', include('payment.urls')),

@@ -19,7 +19,7 @@ from channels.security.websocket import AllowedHostsOriginValidator
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 import orders.routing
-import esp32.routing
+import device.routing
 
 
 application = ProtocolTypeRouter({
@@ -27,7 +27,7 @@ application = ProtocolTypeRouter({
     "websocket": AllowedHostsOriginValidator(
         AuthMiddlewareStack(
             URLRouter(
-                esp32.routing.gaschek_urlpatterns +
+                device.routing.gaschek_urlpatterns +
                 orders.routing.orders_urlpatterns
             )
         )

@@ -30,8 +30,12 @@ def decrypt(enc):
     cipher = AES.new(SERVER_ENCRYPTION_KEY.encode('utf-8'), AES.MODE_CBC, SERVER_ENCRYPTION_IV_KEY)
     return unpad(cipher.decrypt(enc),16).decode("utf-8", "ignore")
 
+def auth_encoder(payload):
+    token = jwt.encode(payload, key=str(
+            JWT_KEY), algorithm='HS256')
+    return encrypt(token)
 
-def jwt_decoder(token):
-    d_token = decrypt(token)
-    payload = jwt.decode(d_token, key=JWT_KEY, algorithms=['HS256'])
+def auth_decoder(token):
+    payload = jwt.decode(decrypt(token),
+                    key=JWT_KEY, algorithms=['HS256'])
     return payload

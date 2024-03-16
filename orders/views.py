@@ -8,7 +8,7 @@ from accounts.models import Cylinder_Price, Delivery_Fee
 from .serializers import (Cylinder_Price_Serializer,
                           Order_Serializer,
                           Delivery_Fee_Serializer)
-from functions.encryption import jwt_decoder, encrypt
+from functions.encryption import auth_decoder, encrypt
 from functions.CustomQuery import get_if_exists
 import json
 # Create your views here.
@@ -30,7 +30,7 @@ class AllGasDealersAPI(APIView):
 class Create_Cylinder_Price(APIView):
     def post(self, request):
         try:
-            payload = jwt_decoder(request.META.get('HTTP_AUTHORIZATION'))
+            payload = auth_decoder(request.META.get('HTTP_AUTHORIZATION'))
             user = User.objects.get(id=payload['id'])
             gas_dealer = Gas_Dealer.objects.get(user=user)
 
@@ -63,7 +63,7 @@ class Create_Cylinder_Price(APIView):
     # to delete cylinder_price
     def patch(self, request):
         try:
-            payload = jwt_decoder(request.META.get('HTTP_AUTHORIZATION'))
+            payload = auth_decoder(request.META.get('HTTP_AUTHORIZATION'))
             user = User.objects.get(id=payload['id'])
             gas_dealer = Gas_Dealer.objects.get(user=user)
 
@@ -88,7 +88,7 @@ class Create_Cylinder_Price(APIView):
 class Get_Cylinder_Price(APIView):
     def get(self, request):
         try:
-            payload = jwt_decoder(request.META.get('HTTP_AUTHORIZATION'))
+            payload = auth_decoder(request.META.get('HTTP_AUTHORIZATION'))
             user = User.objects.get(id=payload['id'])
             gas_dealer = Gas_Dealer.objects.get(user=user)
 
@@ -109,7 +109,7 @@ class Get_Cylinder_Price(APIView):
 class Create_Delivery_Fee(APIView):
     def post(self, request):
         try:
-            payload = jwt_decoder(request.META.get('HTTP_AUTHORIZATION'))
+            payload = auth_decoder(request.META.get('HTTP_AUTHORIZATION'))
             user = User.objects.get(id=payload['id'])
             gas_dealer = Gas_Dealer.objects.get(user=user)
 
@@ -139,7 +139,7 @@ class Create_Delivery_Fee(APIView):
 
     def patch(self, request):
         try:
-            payload = jwt_decoder(request.META.get('HTTP_AUTHORIZATION'))
+            payload = auth_decoder(request.META.get('HTTP_AUTHORIZATION'))
             user = User.objects.get(id=payload['id'])
             gas_dealer = Gas_Dealer.objects.get(user=user)
 
@@ -163,7 +163,7 @@ class Create_Delivery_Fee(APIView):
 class Get_Delivery_Fee(APIView):
     def get(self, request):
         try:
-            payload = jwt_decoder(request.META.get('HTTP_AUTHORIZATION'))
+            payload = auth_decoder(request.META.get('HTTP_AUTHORIZATION'))
             user = User.objects.get(id=payload['id'])
             gas_dealer = Gas_Dealer.objects.get(user=user)
 
@@ -184,13 +184,13 @@ class Get_Delivery_Fee(APIView):
 class Get_orders(APIView, LimitOffsetPagination):
     def post(self, request):
         try:
-            payload = jwt_decoder(request.META.get('HTTP_AUTHORIZATION'))
+            payload = auth_decoder(request.META.get('HTTP_AUTHORIZATION'))
             user = User.objects.get(id=payload['id'])
 
             if (user.is_dealer is True):
                 gas_dealer = Gas_Dealer.objects.get(user=user)
                 orders = Gas_orders.objects.filter(
-                    gas_dealer=gas_dealer).order_by('created_at').reverse()
+                    gas_dealer=gas_dealer).order_by('-created_at')
                 user_pending = Gas_orders.objects.filter(
                     gas_dealer=gas_dealer, user_confirmed=False, dealer_confirmed=True)
                 dealer_pending = Gas_orders.objects.filter(
@@ -204,7 +204,7 @@ class Get_orders(APIView, LimitOffsetPagination):
                 })))
             else:
                 orders = Gas_orders.objects.filter(
-                    user=user).order_by('created_at').reverse()
+                    user=user).order_by('-created_at')
                 results = self.paginate_queryset(orders, request, view=self)
                 serializer = Order_Serializer(results, many=True)
                 return self.get_paginated_response(encrypt(json.dumps(serializer.data)))
@@ -236,7 +236,7 @@ class GasDealer_SearchAPI(APIView):
 class Confirm_OrderAPI(APIView):
     def post(self, request):
         try:
-            payload = jwt_decoder(request.META.get('HTTP_AUTHORIZATION'))
+            payload = auth_decoder(request.META.get('HTTP_AUTHORIZATION'))
             user = User.objects.get(id=payload['id'])
 
             if(request.data['user_type'] == "dealer"):

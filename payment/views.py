@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from .models import Payment
 from orders.models import Gas_orders
 from accounts.models import User, Gas_Dealer, Cylinder_Price, Delivery_Fee
-from functions.encryption import jwt_decoder
+from functions.encryption import auth_decoder
 from external_api.paystack import initialize_payment
 from django.conf import settings
 from functions.CustomQuery import get_if_exists
@@ -13,7 +13,7 @@ from functions.CustomQuery import get_if_exists
 
 class PaymentAPI(APIView):
     def post(self, request):
-        payload = jwt_decoder(request.META.get('HTTP_AUTHORIZATION'))
+        payload = auth_decoder(request.META.get('HTTP_AUTHORIZATION'))
         cylinder = request.data['cylinder']
         dealer = request.data['dealer']
         callback_url = request.data['callback_url']
@@ -96,7 +96,7 @@ class PaymentAPI(APIView):
 
 # class PaymentAPI(APIView):
 #     def post(self, request):
-#         payload = jwt_decoder(request.data['token'])
+#         payload = auth_decoder(request.data['token'])
 #         cylinder = request.data['cylinder']
 #         dealer = request.data['dealer']
 #         callback_url = request.data['callback_url']

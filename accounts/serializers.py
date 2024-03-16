@@ -7,14 +7,11 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', "usernames", "first_name",
+        fields = ['id', 'email', "first_name",
                   "last_name", "is_active", "password",
-                  "is_dealer", "is_connected_with_device", "is_verified", "country_code",
+                  "is_dealer", "is_verified", "country_code",
                   "created_at", "updated_at",
-                  "phonenumber_ordering",
-                  "phonenumber_gaschek_device_1",
-                  "phonenumber_gaschek_device_2",
-                  "phonenumber_gaschek_device_3",
+                  "phonenumber",
                   "address", 'state']
         extra_kwargs = {'password': {'write_only': True}}
 
@@ -41,7 +38,7 @@ class GasDealerSearchSerializer(serializers.ModelSerializer):
 
 
 class LogInSerializer(serializers.Serializer):
-    username = serializers.CharField()
+    email = serializers.CharField()
     password = serializers.CharField()
 
 
