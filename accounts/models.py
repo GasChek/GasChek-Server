@@ -1,7 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+
 # from django.db.models.signals import post_save
 # from functions.CustomQuery import generate_unique_code
+
 
 class CustomAccountManager(BaseUserManager):
     def create_superuser(self, email, password, **other_fields):
@@ -10,11 +12,10 @@ class CustomAccountManager(BaseUserManager):
         other_fields.setdefault("is_superuser", True)
 
         if other_fields.get("is_staff") is not True:
-            raise ValueError('Superuser must be assigned to is_staff=True.')
+            raise ValueError("Superuser must be assigned to is_staff=True.")
 
         if other_fields.get("is_superuser") is not True:
-            raise ValueError(
-                'Superuser must be assigned to is_superuser=True.')
+            raise ValueError("Superuser must be assigned to is_superuser=True.")
 
         return self.create_user(email, password, **other_fields)
 
@@ -22,7 +23,7 @@ class CustomAccountManager(BaseUserManager):
         # if user_name is None:
         #     raise ValueError('Users must provide a username')
         if email is None:
-            raise ValueError('Users must provide an email address')
+            raise ValueError("Users must provide an email address")
 
         email = self.normalize_email(email)
         user = self.model(email=email, **other_fields)
@@ -32,8 +33,7 @@ class CustomAccountManager(BaseUserManager):
 
 
 class User(AbstractUser):
-    email = models.EmailField(
-        max_length=50, unique=True, blank=True)
+    email = models.EmailField(max_length=50, unique=True, blank=True)
     first_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
     address = models.CharField(max_length=1000, blank=True)
@@ -58,7 +58,6 @@ class User(AbstractUser):
     #             device_id = generate_unique_code(Gaschek_Device)
     #             Gaschek_Device.objects.create(user=instance, device_id=device_id)
 
-
     def __str__(self):
         if self.is_staff:
             return f"{self.email} ADMIN"
@@ -66,6 +65,8 @@ class User(AbstractUser):
             return f"{self.email} GAS DEALER"
         else:
             return f"{self.email} USER"
+
+
 # post_save.connect(User.create_device_model, sender=User)
 
 
@@ -90,11 +91,11 @@ class Gas_Dealer(models.Model):
     selling = models.BooleanField(default=True)
     open = models.BooleanField(default=False)
     sold = models.BigIntegerField(default=0)
-    #LOCATION
+    # LOCATION
     longitude = models.CharField(max_length=500)
     latitude = models.CharField(max_length=500)
     address = models.CharField(max_length=500)
-    #SUBACOUNT
+    # SUBACOUNT
     account_number = models.CharField(max_length=30)
     bank_name = models.CharField(max_length=50)
     bank_code = models.CharField(max_length=5)
@@ -106,16 +107,18 @@ class Gas_Dealer(models.Model):
     def __str__(self):
         return self.company_name
 
+
 class Cylinder_Price(models.Model):
     gas_dealer = models.ForeignKey(Gas_Dealer, on_delete=models.CASCADE)
     cylinder = models.DecimalField(decimal_places=1, max_digits=10)
     price = models.IntegerField()
 
     class Meta:
-        ordering = ['gas_dealer']
+        ordering = ["gas_dealer"]
 
     def __str__(self):
         return f"{self.gas_dealer} {self.cylinder}kg NGN {self.price}"
+
 
 class Delivery_Fee(models.Model):
     gas_dealer = models.ForeignKey(Gas_Dealer, on_delete=models.CASCADE)
@@ -124,9 +127,10 @@ class Delivery_Fee(models.Model):
     def __str__(self):
         return f"{self.gas_dealer} delivery fee"
 
+
 class Abandoned_Subaccounts(models.Model):
     company_name = models.CharField(max_length=50)
-    #SUBACOUNT
+    # SUBACOUNT
     subaccount_code = models.CharField(max_length=100, blank=True)
     subaccount_id = models.BigIntegerField(blank=True)
 

@@ -1,12 +1,10 @@
 from django.db import models
 from accounts.models import User
 
+
 class Gaschek_Device(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT, blank=True, null=True)
-    choices = {
-        ("on", "on"),
-        ("off", "off")
-    }
+    choices = {("on", "on"), ("off", "off")}
     device_id = models.CharField(max_length=50, unique=True)
     password = models.CharField(max_length=50, unique=True)
     alarm = models.CharField(choices=choices, max_length=10, default="off")
@@ -26,10 +24,10 @@ class Gaschek_Device(models.Model):
 
     def __str__(self):
         return f"{self.device_id} Device"
-    
+
+
 class Leakage_History(models.Model):
-    device = models.ForeignKey(
-        Gaschek_Device, on_delete=models.CASCADE)
+    device = models.ForeignKey(Gaschek_Device, on_delete=models.CASCADE)
     action = models.CharField(max_length=15)
     created_at = models.DateTimeField(auto_now=True)
 

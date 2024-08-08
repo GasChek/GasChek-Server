@@ -12,13 +12,12 @@ class Notification(threading.Thread):
 
     def run(self):
         try:
-            device = FCMDevice.objects.get(
-                registration_id=self.reg_id, active=True)
+            device = FCMDevice.objects.get(registration_id=self.reg_id, active=True)
             message = Message(
                 data={
                     "title": self.title,
                     "body": self.body,
-                    "image": "https://gaschek.netlify.app/static/media/logo.2278fcc1c56ef14abe57.png"
+                    "image": "https://gaschek.netlify.app/static/media/logo.2278fcc1c56ef14abe57.png",
                 }
             )
             for i in range(3):

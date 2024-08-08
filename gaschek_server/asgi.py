@@ -7,12 +7,13 @@ For more information on this file, see
 https://docs.djangoproject.com/en/4.1/howto/deployment/asgi/
 """
 
-# Must do this for daphne to work 
+# Must do this for daphne to work
 import os
 import django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gaschek_server.settings')
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "gaschek_server.settings")
 django.setup()
-# Must do this for daphne to work 
+# Must do this for daphne to work
 
 from django.core.asgi import get_asgi_application
 from channels.security.websocket import AllowedHostsOriginValidator
@@ -22,14 +23,16 @@ import orders.routing
 import device.routing
 
 
-application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
-    "websocket": AllowedHostsOriginValidator(
-        AuthMiddlewareStack(
-            URLRouter(
-                device.routing.gaschek_urlpatterns +
-                orders.routing.orders_urlpatterns
+application = ProtocolTypeRouter(
+    {
+        "http": get_asgi_application(),
+        "websocket": AllowedHostsOriginValidator(
+            AuthMiddlewareStack(
+                URLRouter(
+                    device.routing.gaschek_urlpatterns
+                    + orders.routing.orders_urlpatterns
+                )
             )
-        )
-    )
-})
+        ),
+    }
+)

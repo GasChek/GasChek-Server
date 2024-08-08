@@ -12,9 +12,9 @@ class HandleEmail(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
-        subject = 'GasChek'
+        subject = "GasChek"
         otp = str(np.random.randint(100000, 999999 + 1))
-        message = f'Your otp is {otp}'
+        message = f"Your otp is {otp}"
         email_from = settings.EMAIL_HOST_USER
 
         if self.mode == "create":
@@ -23,15 +23,10 @@ class HandleEmail(threading.Thread):
             user_token = Token.objects.get(user=self.user)
             user_token.otp = otp
             user_token.save()
-            
-        send_mail(
-            subject,
-            message,
-            email_from,
-            [self.user],
-            fail_silently=False
-        )
-        
+
+        send_mail(subject, message, email_from, [self.user], fail_silently=False)
+
+
 # class HandleEmail_User(threading.Thread):
 #     def __init__(self, email, mode):
 #         self.email = email
@@ -51,7 +46,7 @@ class HandleEmail(threading.Thread):
 #             user_token = Token.objects.get(user__email=self.email)
 #             user_token.otp = otp
 #             user_token.save()
-        
+
 #         send_mail(
 #             subject,
 #             message,
@@ -59,6 +54,3 @@ class HandleEmail(threading.Thread):
 #             [self.email],
 #             fail_silently=False
 #         )
-        
-          
-         

@@ -10,29 +10,56 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('accounts', '0002_delete_gaschek_device'),
-        ('payment', '__first__'),
+        ("accounts", "0002_delete_gaschek_device"),
+        ("payment", "__first__"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Gas_orders',
+            name="Gas_orders",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('cylinder', models.CharField(max_length=10)),
-                ('price', models.IntegerField()),
-                ('delivery', models.IntegerField()),
-                ('dealer_confirmed', models.BooleanField(default=False)),
-                ('user_confirmed', models.BooleanField(default=False)),
-                ('gas_dealer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.gas_dealer')),
-                ('payment', models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, to='payment.payment')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("cylinder", models.CharField(max_length=10)),
+                ("price", models.IntegerField()),
+                ("delivery", models.IntegerField()),
+                ("dealer_confirmed", models.BooleanField(default=False)),
+                ("user_confirmed", models.BooleanField(default=False)),
+                (
+                    "gas_dealer",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="accounts.gas_dealer",
+                    ),
+                ),
+                (
+                    "payment",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="payment.payment",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['user'],
+                "ordering": ["user"],
             },
         ),
     ]

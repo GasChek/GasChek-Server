@@ -7,22 +7,29 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Mqtt_Servers',
+            name="Mqtt_Servers",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('server', models.CharField(max_length=255)),
-                ('server_url', models.CharField(max_length=255)),
-                ('port', models.IntegerField()),
-                ('keepalive', models.IntegerField()),
-                ('user', models.CharField(max_length=255)),
-                ('password', models.CharField(max_length=255)),
-                ('qos', models.IntegerField(default=1)),
-                ('active', models.BooleanField(default=False)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("server", models.CharField(max_length=255)),
+                ("server_url", models.CharField(max_length=255)),
+                ("port", models.IntegerField()),
+                ("keepalive", models.IntegerField()),
+                ("user", models.CharField(max_length=255)),
+                ("password", models.CharField(max_length=255)),
+                ("qos", models.IntegerField(default=1)),
+                ("active", models.BooleanField(default=False)),
             ],
         ),
     ]

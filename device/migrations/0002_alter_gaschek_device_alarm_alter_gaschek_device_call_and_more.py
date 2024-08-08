@@ -8,34 +8,46 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('device', '0001_initial'),
+        ("device", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='gaschek_device',
-            name='alarm',
-            field=models.CharField(choices=[('on', 'on'), ('off', 'off')], default='off', max_length=10),
+            model_name="gaschek_device",
+            name="alarm",
+            field=models.CharField(
+                choices=[("on", "on"), ("off", "off")], default="off", max_length=10
+            ),
         ),
         migrations.AlterField(
-            model_name='gaschek_device',
-            name='call',
-            field=models.CharField(choices=[('on', 'on'), ('off', 'off')], default='off', max_length=10),
+            model_name="gaschek_device",
+            name="call",
+            field=models.CharField(
+                choices=[("on", "on"), ("off", "off")], default="off", max_length=10
+            ),
         ),
         migrations.AlterField(
-            model_name='gaschek_device',
-            name='indicator',
-            field=models.CharField(choices=[('on', 'on'), ('off', 'off')], default='off', max_length=10),
+            model_name="gaschek_device",
+            name="indicator",
+            field=models.CharField(
+                choices=[("on", "on"), ("off", "off")], default="off", max_length=10
+            ),
         ),
         migrations.AlterField(
-            model_name='gaschek_device',
-            name='text',
-            field=models.CharField(choices=[('on', 'on'), ('off', 'off')], default='off', max_length=10),
+            model_name="gaschek_device",
+            name="text",
+            field=models.CharField(
+                choices=[("on", "on"), ("off", "off")], default="off", max_length=10
+            ),
         ),
         migrations.AlterField(
-            model_name='gaschek_device',
-            name='user',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+            model_name="gaschek_device",
+            name="user",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

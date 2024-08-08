@@ -6,38 +6,46 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('device', '0003_alter_gaschek_device_user'),
+        ("device", "0003_alter_gaschek_device_user"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='gaschek_device',
-            name='alarm',
-            field=models.CharField(choices=[('off', 'off'), ('on', 'on')], default='off', max_length=10),
+            model_name="gaschek_device",
+            name="alarm",
+            field=models.CharField(
+                choices=[("off", "off"), ("on", "on")], default="off", max_length=10
+            ),
         ),
         migrations.AlterField(
-            model_name='gaschek_device',
-            name='call',
-            field=models.CharField(choices=[('off', 'off'), ('on', 'on')], default='off', max_length=10),
+            model_name="gaschek_device",
+            name="call",
+            field=models.CharField(
+                choices=[("off", "off"), ("on", "on")], default="off", max_length=10
+            ),
         ),
         migrations.AlterField(
-            model_name='gaschek_device',
-            name='cylinder',
+            model_name="gaschek_device",
+            name="cylinder",
             field=models.DecimalField(decimal_places=1, max_digits=10),
         ),
         migrations.AlterField(
-            model_name='gaschek_device',
-            name='gas_mass',
+            model_name="gaschek_device",
+            name="gas_mass",
             field=models.DecimalField(decimal_places=1, max_digits=10),
         ),
         migrations.AlterField(
-            model_name='gaschek_device',
-            name='indicator',
-            field=models.CharField(choices=[('off', 'off'), ('on', 'on')], default='off', max_length=10),
+            model_name="gaschek_device",
+            name="indicator",
+            field=models.CharField(
+                choices=[("off", "off"), ("on", "on")], default="off", max_length=10
+            ),
         ),
         migrations.AlterField(
-            model_name='gaschek_device',
-            name='text',
-            field=models.CharField(choices=[('off', 'off'), ('on', 'on')], default='off', max_length=10),
+            model_name="gaschek_device",
+            name="text",
+            field=models.CharField(
+                choices=[("off", "off"), ("on", "on")], default="off", max_length=10
+            ),
         ),
     ]

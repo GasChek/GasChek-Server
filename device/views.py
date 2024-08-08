@@ -10,78 +10,79 @@ from fcm_django.models import FCMDevice
 from functions.notification import Notification
 import json
 import datetime
+
 # from django.http import StreamingHttpResponse, JsonResponse
 # import asyncio
 # from django.views.generic import View
 # from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views.decorators.gzip import gzip_page
+
 # from asgiref.sync import sync_to_async
 
-    
-@method_decorator(gzip_page, name='dispatch')
+
+@method_decorator(gzip_page, name="dispatch")
 class ConnectDeviceAPI(APIView):
     def error_res(self):
-        return Response({
-            'status': 400,
-            'message': 'Invaild device id or password'
-        })
+        return Response({"status": 400, "message": "Invaild device id or password"})
+
     def post(self, request):
         try:
-            payload = auth_decoder(request.META.get('HTTP_AUTHORIZATION'))
+            payload = auth_decoder(request.META.get("HTTP_AUTHORIZATION"))
             serializer = LogInSerializer(data=request.data)
 
             if serializer.is_valid():
-                device_id = serializer.data['device_id']
-                password = serializer.data['password']
+                device_id = serializer.data["device_id"]
+                password = serializer.data["password"]
 
                 device = get_if_exists(Gaschek_Device, device_id=device_id)
-                
-                if (not device or device.password != password or 
-                    device.is_connected_with_device is False):
+
+                if (
+                    not device
+                    or device.password != password
+                    or device.is_connected_with_device is False
+                ):
                     return self.error_res()
-                
-                user = get_if_exists(User, id=payload['id'])
+
+                user = get_if_exists(User, id=payload["id"])
                 device.user = user
                 device.save()
 
                 payload = {
-                    'device_id': device.device_id,
-                    'account_type': "user",
-                    'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30),
-                    'iat': datetime.datetime.utcnow()
+                    "device_id": device.device_id,
+                    "account_type": "user",
+                    "exp": datetime.datetime.utcnow() + datetime.timedelta(days=30),
+                    "iat": datetime.datetime.utcnow(),
                 }
                 token = auth_encoder(payload)
-                return Response({
-                    'status': 200,
-                    'message': "Connected",
-                    'token': token,
-                })
+                return Response(
+                    {
+                        "status": 200,
+                        "message": "Connected",
+                        "token": token,
+                    }
+                )
             else:
                 return self.error_res()
         except Exception:
-            return Response({
-                'status': 400,
-                'message': 'Something went wrong, try again later'
-            })
+            return Response(
+                {"status": 400, "message": "Something went wrong, try again later"}
+            )
 
-        
-@method_decorator(gzip_page, name='dispatch')
+
+@method_decorator(gzip_page, name="dispatch")
 class Report_leakage(APIView, LimitOffsetPagination):
     def post(self, request):
-        device = Gaschek_Device.objects.get(device_id=request.data['device_id'])
+        device = Gaschek_Device.objects.get(device_id=request.data["device_id"])
 
         if not device:
-            return Response({
-                "status": 400,
-                "message": "Invalid device"
-            })
+            return Response({"status": 400, "message": "Invalid device"})
 
-        Leakage_History.objects.create(device=device, action=request.data['action'])
+        Leakage_History.objects.create(device=device, action=request.data["action"])
         fcm = FCMDevice.objects.filter(user_id=device.user.id)
 
         try:
-            if request.data['action'] == "smoke":
+            if request.data["action"] == "smoke":
                 if fcm:
                     for device in fcm:
                         Notification(
@@ -90,9 +91,7 @@ class Report_leakage(APIView, LimitOffsetPagination):
                             body="GasChek detected smoke",
                         ).start()
                     # notificaton
-                return Response({
-                    'status': 200
-                })
+                return Response({"status": 200})
             else:
                 if fcm:
                     for device in fcm:
@@ -102,35 +101,32 @@ class Report_leakage(APIView, LimitOffsetPagination):
                             body="GasChek detected gas leakage",
                         ).start()
                     # notificaton
-                return Response({
-                    'status': 200
-                })
+                return Response({"status": 200})
         except Exception as e:
             print(e)
 
     def get(self, request):
         try:
-            payload = auth_decoder(request.META.get('HTTP_AUTHORIZATION'))
-            device = Gaschek_Device.objects.get(device_id=payload['device_id'])
+            payload = auth_decoder(request.META.get("HTTP_AUTHORIZATION"))
+            device = Gaschek_Device.objects.get(device_id=payload["device_id"])
 
             if not device:
-                return Response({
-                    "status": 400,
-                    "message": "Invalid device"
-                })
+                return Response({"status": 400, "message": "Invalid device"})
 
-            leakages = Leakage_History.objects.filter(
-                device=device).order_by('-created_at')
-
+            leakages = Leakage_History.objects.filter(device=device).order_by(
+                "-created_at"
+            )
 
             results = self.paginate_queryset(leakages, request, view=self)
             serializer = Leakage_History_Serializer(results, many=True)
             return self.get_paginated_response(encrypt(json.dumps(serializer.data)))
-        
+
         except Exception:
-            return Response({
-                "status": 400,
-            })
+            return Response(
+                {
+                    "status": 400,
+                }
+            )
 
 
 ######## UPDATE CYLINDER DETAILS COMING FROM DEVICE TO DATABASE
@@ -150,14 +146,14 @@ class Report_leakage(APIView, LimitOffsetPagination):
 #             if ('cylinder' not in payload and
 #                 'gas_mass' not in payload and
 #                 'gas_level' not in payload and
-#                 'battery_level' not in payload and 
+#                 'battery_level' not in payload and
 #                 'indicator' not in payload):
 #                 return JsonResponse({
 #                     "status": 400,
 #                 })
-                
+
 #             gaschek_device = await sync_to_async(Gaschek_Device.objects.get)(user=user)
-            
+
 #             gaschek_device.cylinder = payload['cylinder']
 #             gaschek_device.gas_mass = payload['gas_mass']
 #             gaschek_device.gas_level = payload['gas_level']
@@ -184,7 +180,7 @@ class Report_leakage(APIView, LimitOffsetPagination):
 #             }
 #             yield data
 #             break
-        
+
 #         # serializer = await sync_to_async(Gaschek_Get_Serializer)(gaschek_device)
 #         # serializer2 = await sync_to_async(UserSerializer)(user)
 
@@ -211,4 +207,3 @@ class Report_leakage(APIView, LimitOffsetPagination):
 #             streaming_content=stream(payload),
 #             content_type="text/event-stream"
 #         )
-

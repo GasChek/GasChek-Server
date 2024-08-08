@@ -5,15 +5,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
+PAYSTACK_SECRET_KEY = os.getenv("PAYSTACK_SECRET_KEY")
 
 
-def initialize_payment(email, price, fee, subaccount_code, callback_url, cylinder, gas_dealer):
-    url = 'https://api.paystack.co/transaction/initialize'
+def initialize_payment(
+    email, price, fee, subaccount_code, callback_url, cylinder, gas_dealer
+):
+    url = "https://api.paystack.co/transaction/initialize"
     headers = {
-        'Authorization': PAYSTACK_SECRET_KEY,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        "Authorization": PAYSTACK_SECRET_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
     }
     dataa = {
         "email": email,
@@ -26,25 +28,25 @@ def initialize_payment(email, price, fee, subaccount_code, callback_url, cylinde
                 {
                     "display_name": "Gas Dealer",
                     "variable_name": "Gas Dealer",
-                    "value": gas_dealer
+                    "value": gas_dealer,
                 },
                 {
                     "display_name": "Cylinder",
                     "variable_name": "Cylinder",
-                    "value": f"{cylinder} kg"
+                    "value": f"{cylinder} kg",
                 },
                 {
                     "display_name": "Price",
                     "variable_name": "Price",
-                    "value": f"NGN {price}"
+                    "value": f"NGN {price}",
                 },
                 {
                     "display_name": "Delivery fee",
                     "variable_name": "Delivery fee",
-                    "value": f"NGN {fee}"
+                    "value": f"NGN {fee}",
                 },
             ]
-        }
+        },
     }
     response = requests.post(url, data=json.dumps(dataa), headers=headers)
 
@@ -55,11 +57,11 @@ def initialize_payment(email, price, fee, subaccount_code, callback_url, cylinde
 
 
 def verify_payment(refrence):
-    url = f'https://api.paystack.co/transaction/verify/{refrence}'
+    url = f"https://api.paystack.co/transaction/verify/{refrence}"
     headers = {
-        'Authorization': PAYSTACK_SECRET_KEY,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        "Authorization": PAYSTACK_SECRET_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
     }
 
     response = requests.get(url, headers=headers)
@@ -70,18 +72,20 @@ def verify_payment(refrence):
     return response.json()
 
 
-def create_subaccount(business_name, settlement_bank, account_number, percentage_charge):
-    url = 'https://api.paystack.co/subaccount'
+def create_subaccount(
+    business_name, settlement_bank, account_number, percentage_charge
+):
+    url = "https://api.paystack.co/subaccount"
     headers = {
-        'Authorization': PAYSTACK_SECRET_KEY,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        "Authorization": PAYSTACK_SECRET_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
     }
     dataa = {
         "business_name": business_name,
         "settlement_bank": settlement_bank,
         "account_number": account_number,
-        "percentage_charge": percentage_charge
+        "percentage_charge": percentage_charge,
     }
 
     response = requests.post(url, data=json.dumps(dataa), headers=headers)
@@ -93,11 +97,11 @@ def create_subaccount(business_name, settlement_bank, account_number, percentage
 
 
 def update_subaccount(subaccount_code, business_name, settlement_bank, account_number):
-    url = f'https://api.paystack.co/subaccount/{subaccount_code}'
+    url = f"https://api.paystack.co/subaccount/{subaccount_code}"
     headers = {
-        'Authorization': PAYSTACK_SECRET_KEY,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        "Authorization": PAYSTACK_SECRET_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
     }
     dataa = {
         "business_name": business_name,
