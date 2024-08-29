@@ -60,6 +60,10 @@ class LogInSerializer(serializers.Serializer):
     password = serializers.CharField()
 
 
+class VerifyAccountSerializer(serializers.Serializer):
+    otp = serializers.IntegerField()
+
+
 class DealerLogInSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()

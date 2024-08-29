@@ -72,7 +72,7 @@ class User(AbstractUser):
 
 class Token(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    otp = models.CharField(max_length=6)
+    otp = models.IntegerField()
 
     def __str__(self):
         return str(self.user)

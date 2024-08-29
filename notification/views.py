@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from fcm_django.models import FCMDevice
 from accounts.models import User
+from accounts.utils.auth_utils import jwt_required
 from functions.encryption import encrypt, decrypt
 import json
 import jwt

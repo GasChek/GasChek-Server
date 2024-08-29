@@ -6,7 +6,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-JWT_KEY = os.getenv("JWT_KEY")
+ACCESS_SECRET_KEY = os.getenv("ACCESS_SECRET_KEY")
 SERVER_ENCRYPTION_KEY = os.getenv("SERVER_ENCRYPTION_KEY")
 SERVER_ENCRYPTION_IV_KEY = os.getenv("SERVER_ENCRYPTION_IV_KEY").encode("utf-8")
 
@@ -38,10 +38,10 @@ def decrypt(enc):
 
 
 def auth_encoder(payload):
-    token = jwt.encode(payload, key=str(JWT_KEY), algorithm="HS256")
+    token = jwt.encode(payload, key=str(ACCESS_SECRET_KEY), algorithm="HS256")
     return encrypt(token)
 
 
 def auth_decoder(token):
-    payload = jwt.decode(decrypt(token), key=JWT_KEY, algorithms=["HS256"])
+    payload = jwt.decode(decrypt(token), key=ACCESS_SECRET_KEY, algorithms=["HS256"])
     return payload

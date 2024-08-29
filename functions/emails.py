@@ -24,7 +24,7 @@ class HandleEmail(threading.Thread):
             user_token.otp = otp
             user_token.save()
 
-        send_mail(subject, message, email_from, [self.user], fail_silently=False)
+        send_mail(subject, message, email_from, [self.user.email], fail_silently=False)
 
 
 # class HandleEmail_User(threading.Thread):

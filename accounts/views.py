@@ -1,7 +1,10 @@
+import json
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import status
 from .serializers import (
     LogInSerializer,
+    VerifyAccountSerializer,
     DealerLogInSerializer,
     UserSerializer,
     GasDealerSerializer,
@@ -17,303 +20,278 @@ from .models import (
 from orders.serializers import Cylinder_Price_Serializer, Delivery_Fee_Serializer
 from django.contrib.auth.models import update_last_login
 from functions.emails import HandleEmail
-from functions.encryption import auth_decoder, auth_encoder, encrypt
+from functions.encryption import auth_decoder, encrypt
 from functions.CustomQuery import get_if_exists
 from external_api.paystack import create_subaccount, update_subaccount
-from django.core.exceptions import ObjectDoesNotExist
 from django.utils.decorators import method_decorator
 from django.views.decorators.gzip import gzip_page
-from dotenv import load_dotenv
-import os
-import jwt
-import json
-import datetime
+from .utils.auth_utils import (
+    generate_auth_token,
+    jwt_required,
+    get_tokens,
+)
 
-load_dotenv()
-JWT_KEY = os.getenv("JWT_KEY")
+
+class RefreshTokenView(APIView):
+    @method_decorator(jwt_required(token_type="refresh"))
+    def post(self, request):
+        user = get_if_exists(User, id=request.payload["id"])
+        if not user:
+            response_data = {
+                "msg": "Invalid auth",
+            }
+            response = Response(response_data, status=status.HTTP_403_FORBIDDEN)
+            if request.data["platform"] == "web":
+                response.delete_cookie("refresh")
+            return response
+        return Response(
+            {
+                "access": generate_auth_token(user, "access", "user"),
+            }
+        )
 
 
 @method_decorator(gzip_page, name="dispatch")
 class SignUpAPI(APIView):
     def post(self, request):
-        try:
-            serializer = UserSerializer(data=request.data)
+        serializer = UserSerializer(data=request.data)
 
-            if serializer.is_valid():
-                serializer.save()
-                user = User.objects.get(email=serializer.data["email"])
-
-                payload = {
-                    "id": user.id,
-                    "type": "verification",
-                    "exp": datetime.datetime.utcnow() + datetime.timedelta(days=15),
-                    "iat": datetime.datetime.utcnow(),
-                }
-                token = auth_encoder(payload)
-                HandleEmail(user, "create").start()
-
-                return Response(
-                    encrypt(
-                        json.dumps(
-                            {
-                                "status": 200,
-                                "message": "User successfully registered check email",
-                                "data": serializer.data,
-                                "token": token,
-                            }
-                        )
-                    )
-                )
-
+        if not serializer.is_valid():
             return Response(
                 encrypt(
                     json.dumps(
                         {
-                            "status": 400,
-                            "message": "Something went wrong",
-                            "data": serializer.errors,
+                            "msg": "User with this email already exists.",
                         }
                     )
-                )
+                ),
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
+        serializer.save()
+        user = User.objects.get(email=serializer.data["email"])
+        HandleEmail(user, "create").start()
+        return Response(
+            encrypt(
+                json.dumps(
+                    {
+                        "token": generate_auth_token(user, "verification", "user"),
+                    }
+                )
+            )
+        )
+        
+
+@method_decorator(gzip_page, name="dispatch")
+class VerifyOTP(APIView):
+    @method_decorator(jwt_required(token_type="verification"))
+    def post(self, request):
+        try:
+            serializer = VerifyAccountSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            user = get_if_exists(User, id=request.payload["id"])
+            if not user:
+                return Response(
+                    {
+                        "msg": "Invalid user",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user_token = Token.objects.get(user=user)
+            if serializer.data["otp"] != user_token.otp:
+                return Response(
+                    {
+                        "msg": "Invalid otp",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user.is_verified = True
+            user.save()
+            response = Response()
+            tokens = get_tokens(user, "user")
+            if request.data["platform"] == "web":
+                response.data = {"access": tokens["access"]}
+                response.set_cookie(
+                    key="refresh",
+                    value=tokens["refresh"],
+                    httponly=True,
+                    samesite="None",
+                    secure=True,  # Use True in production with HTTPS
+                )
+            else:
+                response.data = tokens
+            return response
         except Exception as e:
-            print(e)
-            return Response(encrypt(json.dumps({"status": 400})))
+            print(str(e))
+            return Response(
+                {"msg": "Server error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+@method_decorator(gzip_page, name="dispatch")
+class Resend_Otp(APIView):
+    def post(self, request):
+        user = User.objects.get(email=request.data["email"])
+        HandleEmail(user, "update").start()
+        return Response(
+            {
+                "token": generate_auth_token(user, "verification", "user"),
+            }
+        )
+
+@method_decorator(gzip_page, name="dispatch")
+class LoginAPI(APIView):
+    def error_res(self):
+        return Response(
+            {"msg": "Invalid email or password"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def post(self, request):
+        serializer = LogInSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return self.error_res()
+
+        email = serializer.data["email"].lower()
+        password = serializer.data["password"]
+        user = get_if_exists(User, email=email)
+
+        if not user or not user.check_password(password) or user.is_dealer is True:
+            return self.error_res()
+
+        if user.is_verified is False:
+            return Response(
+                {
+                    "token": generate_auth_token(user, "verification", "user"),
+                },
+                status=status.HTTP_202_ACCEPTED,
+            )
+        update_last_login(None, user)
+        response = Response()
+        tokens = get_tokens(user, "user")
+        if request.data["platform"] == "web":
+            response.data = {"access": tokens["access"]}
+            response.set_cookie(
+                key="refresh",
+                value=tokens["refresh"],
+                httponly=True,
+                samesite="None",
+                secure=True,  # Use True in production with HTTPS
+            )
+        else:
+            response.data = tokens
+        return response
 
 
 # CHECK IF ACCOUNT IS USER OR GAS DEALER
 @method_decorator(gzip_page, name="dispatch")
 class AccountViewAPI(APIView):
-    def post(self, request):
+    @method_decorator(jwt_required(token_type="access"))
+    def get(self, request):
         try:
-            payload = auth_decoder(request.META.get("HTTP_AUTHORIZATION"))
-
-            if (
-                payload["account_type"] == "user"
-                or payload["account_type"] == "gas_dealer"
-            ):
-                return Response(
-                    {
-                        "status": 200,
-                        "account_type": payload["account_type"],
-                    }
-                )
-            else:
-                return Response({"status": 400, "message": "Unauthenticated"})
-        except Exception:
-            return Response({"status": 400, "message": "Unauthenticated"})
-
-
-# CHECK IF ACCOUNT IS USER OR GAS DEALER
-
-
-# USER
-@method_decorator(gzip_page, name="dispatch")
-class LoginAPI(APIView):
-    def error_res(self):
-        return Response({"status": 400, "message": "Invaild email or password"})
-
-    def post(self, request):
-        try:
-            serializer = LogInSerializer(data=request.data)
-
-            if serializer.is_valid():
-                email = serializer.data["email"].lower()
-                password = serializer.data["password"]
-
-                try:
-                    user = User.objects.get(email=email)
-                except ObjectDoesNotExist:
-                    return self.error_res()
-
-                if not user.check_password(password) or user.is_dealer is True:
-                    return self.error_res()
-
-                if user.is_verified is False:
-                    payload = {
-                        "id": user.id,
-                        "type": "verification",
-                        "exp": datetime.datetime.utcnow() + datetime.timedelta(days=15),
-                        "iat": datetime.datetime.utcnow(),
-                    }
-                    token = auth_encoder(payload)
-                    return Response({"status": 201, "token": token})
-
-                update_last_login(None, user)
-                payload = {
-                    "id": user.id,
-                    "account_type": "user",
-                    "exp": datetime.datetime.utcnow() + datetime.timedelta(days=15),
-                    "iat": datetime.datetime.utcnow(),
-                }
-                token = auth_encoder(payload)
-                return Response(
-                    {
-                        "status": 200,
-                        "token": token,
-                    }
-                )
-            else:
-                return self.error_res()
-        except Exception:
             return Response(
-                {"status": 400, "message": "Something went wrong, try again later"}
+                {
+                    "account_type": request.payload["account_type"],
+                }
+            )
+        except Exception as e:
+            print(e)
+            return Response(
+                {"msg": "Server error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
-# @method_decorator(gzip_page, name='dispatch')
-# class ConnectEmailAPI(APIView):
-#     def post(self, request):
-#         try:
-#             try:
-#                 user = User.objects.get(usernames=request.data['username'])
-#             except ObjectDoesNotExist:
-#                 return Response({
-#                     'status': 400,
-#                     'message':'Invaild user',
-#                 })
-#             try:
-#                 user = User.objects.get(email=request.data['email'])
-#                 if user.verified_email is True or user.is_dealer:
-#                     return Response({
-#                         "status": 400,
-#                         "msg": "Email already exists"
-#                     })
-#             except ObjectDoesNotExist:
-#                 user.email = request.data['email']
-#                 user.save()
-#                 token = get_if_exists(Token, user=user)
-#                 def run(action):
-#                     HandleEmail(user, action).start()
-#                 if token:
-#                     run("update")
-#                 else:
-#                     run("create")
-#             return Response({
-#                 'status': 200
-#             })
-#         except Exception:
-#             return Response({
-#                 "status": 400
-#             })
-
-# @method_decorator(gzip_page, name='dispatch')
-# class ChangePasswordAPI(APIView):
-#     def post(self, request):
-#         try:
-#             try:
-#                 user = User.objects.get(usernames=request.data['username'])
-#             except ObjectDoesNotExist:
-#                 return Response({
-#                     'status': 400,
-#                     'message':'Invaild user',
-#                 })
-
-#             if user.is_verified is True:
-#                 return Response({
-#                     'status': 500,
-#                     'message':'Already verified',
-#                 })
-#             if user.check_password(request.data['password']):
-#                 return Response({
-#                     'status': 400,
-#                     'message':'Cannot use this password.',
-#                 })
-#             user.set_password(request.data['password'])
-#             user.is_verified = True
-#             user.save()
-#             return Response({
-#                 'status': 200,
-#                 'message':'Password successfully changed',
-#             })
-#         except Exception:
-#             return Response({
-#                 "status": 400,
-#                 "message": "Something went wrong",
-#             })
-
-
+# CHECK IF ACCOUNT IS USER OR GAS DEALER
 @method_decorator(gzip_page, name="dispatch")
 class ForgotPasswordAPI(APIView):
     def post(self, request):
         try:
-            user = User.objects.get(email=request.data["email"])
+            user = get_if_exists(User, email=request.data["email"])
+            if not user:
+                return Response({"msg": "ok"})
+
             HandleEmail(user, "update").start()
-            payload = {
-                "id": user.id,
-                "type": "verification",
-                "exp": datetime.datetime.utcnow() + datetime.timedelta(days=15),
-                "iat": datetime.datetime.utcnow(),
-            }
-            token = auth_encoder(payload)
-            return Response({"status": 200, "token": token})
-        except ObjectDoesNotExist:
-            return Response({"status": 400, "msg": "Invalid email"})
+            token = generate_auth_token(user, "verification", "user")
+            return Response({"token": token})
+        except Exception as e:
+            print(e)
+            return Response(
+                {"msg": "Server error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 @method_decorator(gzip_page, name="dispatch")
-class VerifyOtpChangePasswordAPI(APIView):
+class ChangePasswordAPI(APIView):
+    @method_decorator(jwt_required(token_type="verification"))
     def post(self, request):
-        payload = auth_decoder(request.META.get("HTTP_AUTHORIZATION"))
         if request.data["p"] != request.data["p2"]:
-            return Response({"status": 400, "msg": "Password does not match"})
-        try:
-            user = User.objects.get(id=payload["id"])
-        except ObjectDoesNotExist:
-            return Response({"status": 400, "msg": "error"})
-        token = Token.objects.get(user=user)
-        if int(token.otp) == int(request.data["otp"]):
-            user.set_password(request.data["p"])
-            user.is_verified = True
-            user.save()
             return Response(
-                {
-                    "status": 200,
-                }
+                {"msg": "Password does not match"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        else:
-            return Response({"status": 400, "msg": "Invalid otp"})
+
+        user = get_if_exists(User, id=request.payload["id"])
+        if not user:
+            return Response(
+                {"msg": "error"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        token = Token.objects.get(user=user)
+        if token.otp != int(request.data["otp"]):
+            return Response(
+                {"msg": "Invalid otp"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(request.data["p"])
+        user.is_verified = True
+        user.save()
+        return Response(
+            {
+                "msg": "ok",
+            }
+        )
 
 
 @method_decorator(gzip_page, name="dispatch")
 class UserViewAPI(APIView):
+    @method_decorator(jwt_required(token_type="access"))
     def post(self, request):
         try:
-            payload = auth_decoder(request.META.get("HTTP_AUTHORIZATION"))
-            user = User.objects.get(id=payload["id"])
+            user = User.objects.get(id=request.payload["id"])
             serializer = UserSerializer(user)
             encrypted_data = encrypt(json.dumps(serializer.data))
 
             return Response(
                 {
-                    "status": 200,
                     "data": encrypted_data,
                 }
             )
-        except Exception:
-            return Response({"status": 400, "message": "Unauthenticated"})
+        except Exception as e:
+            print(e)
+            return Response(
+                {"msg": "Server error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 @method_decorator(gzip_page, name="dispatch")
 class UpdateUserAPI(APIView):
+    @method_decorator(jwt_required(token_type="access"))
     def post(self, request):
         try:
-            payload = auth_decoder(request.META.get("HTTP_AUTHORIZATION"))
-            user = User.objects.get(id=payload["id"])
+            user = User.objects.get(id=request.payload["id"])
             if not user:
-                return Response({"status": 400, "message": "Invalid user"})
+                return Response(
+                    {"msg": "Invalid user"}, status=status.HTTP_400_BAD_REQUEST
+                )
 
-            # user_email = get_if_exists(User,
-            #     email=request.data['email'])
-
-            # if user_email and user_email.id != user.id:
-            #     return Response({
-            #         'status': 400,
-            #         'message': 'Email already exists'
-            #     })
-
-            # user.email = request.data.get('email', user.email)
             user.first_name = request.data.get("first_name", user.first_name)
             user.last_name = request.data.get("last_name", user.last_name)
             user.country_code = request.data.get("country_code", user.country_code)
@@ -328,7 +306,6 @@ class UpdateUserAPI(APIView):
                 encrypt(
                     json.dumps(
                         {
-                            "status": 200,
                             "data": serializer.data,
                         }
                     )
@@ -337,7 +314,32 @@ class UpdateUserAPI(APIView):
         except Exception as e:
             print(e)
             return Response(
-                encrypt(json.dumps({"status": 400, "message": "Unauthenticated"}))
+                {"msg": "Server error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+@method_decorator(gzip_page, name="dispatch")
+class LogoutAPIView(APIView):
+    @method_decorator(jwt_required(token_type="refresh"))
+    def post(self, request):
+        try:
+            user = get_if_exists(User, id=request.payload["id"])
+
+            if not user:
+                return Response(
+                    {"msg": "Not Authorized"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            response = Response({"msg": "ok"})
+            if request.data["platform"] == "web":
+                response.delete_cookie("refresh")
+            return response
+        except Exception as e:
+            print(str(e))
+            return Response(
+                {"msg": "Server error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
@@ -354,8 +356,7 @@ class CreateGasDealerAPI(APIView):
             if user.is_verified is True:
                 return Response(
                     {
-                        "status": 400,
-                        "message": "Email already exists",
+                        "msg": "Email already exists",
                     }
                 )
             else:
@@ -374,8 +375,7 @@ class CreateGasDealerAPI(APIView):
             if gas_dealer.is_verified is True:
                 return Response(
                     {
-                        "status": 400,
-                        "message": "Company name already exists",
+                        "msg": "Company name already exists",
                     }
                 )
 
@@ -385,8 +385,7 @@ class CreateGasDealerAPI(APIView):
             if gas_dealer.is_verified is True:
                 return Response(
                     {
-                        "status": 400,
-                        "message": "Phonenumber already exists",
+                        "msg": "Phonenumber already exists",
                     }
                 )
 
@@ -398,8 +397,7 @@ class CreateGasDealerAPI(APIView):
             if gas_dealer.is_verified is True:
                 return Response(
                     {
-                        "status": 400,
-                        "message": "Account Number already exists",
+                        "msg": "Account Number already exists",
                     }
                 )
 
@@ -462,8 +460,7 @@ class CreateGasDealerAPI(APIView):
 
         return Response(
             {
-                "status": 400,
-                "message": "Something went wrong",
+                "msg": "Something went wrong",
             }
         )
 
@@ -474,14 +471,14 @@ class Verify_Otp(APIView):
         payload = auth_decoder(request.META.get("HTTP_AUTHORIZATION"))
         user = get_if_exists(User, id=payload["id"])
         if not user or user.is_verified is True:
-            return Response({"status": 400, "message": "Invaild email"})
+            return Response({"msg": "Invaild email"})
 
         token = get_if_exists(Token, user=user)
         if not token:
-            return Response({"status": 400, "message": "Invaild email"})
+            return Response({"msg": "Invaild email"})
 
         if token.otp != request.data["otp"]:
-            return Response({"status": 400, "message": "Invaild otp"})
+            return Response({"msg": "Invaild otp"})
 
         response = {}
         response["status"] = 200
@@ -499,77 +496,45 @@ class Verify_Otp(APIView):
             response["type"] = "user"
         return Response(response)
 
-
-@method_decorator(gzip_page, name="dispatch")
-class Resend_Otp(APIView):
-    def post(self, request):
-        payload = auth_decoder(request.META.get("HTTP_AUTHORIZATION"))
-        user = User.objects.get(id=payload["id"])
-
-        HandleEmail(user, "update").start()
-        return Response(
-            {
-                "status": 200,
-            }
-        )
-
-
 @method_decorator(gzip_page, name="dispatch")
 class Dealer_LoginAPI(APIView):
     def post(self, request):
-        try:
-            serializer = DealerLogInSerializer(data=request.data)
+        serializer = DealerLogInSerializer(data=request.data)
 
-            if serializer.is_valid():
-                email = serializer.data["email"]
-                password = serializer.data["password"]
-
-                try:
-                    user = User.objects.get(email=email)
-                except ObjectDoesNotExist:
-                    return Response(
-                        {"status": 400, "message": "Invaild email or password"}
-                    )
-
-                if not user.check_password(password) or user.is_dealer is False:
-                    return Response(
-                        {"status": 400, "message": "Invaild email or password"}
-                    )
-
-                if user.is_verified is False:
-                    HandleEmail(user, "update").start()
-                    return Response({"status": True, "email": serializer.data["email"]})
-
-                update_last_login(None, user)
-
-                payload = {
-                    "id": user.id,
-                    "account_type": "gas_dealer",
-                    "exp": datetime.datetime.utcnow() + datetime.timedelta(days=15),
-                    "iat": datetime.datetime.utcnow(),
-                }
-                token = jwt.encode(payload, key=JWT_KEY, algorithm="HS256")
-                encrypt_token = encrypt(token)
-
-                return Response(
-                    {
-                        "status": 200,
-                        "message": "Login successful",
-                        "token": encrypt_token,
-                    }
-                )
-            else:
-                return Response(
-                    {
-                        "status": 400,
-                        "message": "Invaild email or password",
-                        "data": serializer.errors,
-                    }
-                )
-        except Exception:
+        if not serializer.is_valid():
             return Response(
-                {"status": 400, "message": "Something went wrong, try again later"}
+                {
+                    "msg": "Invaild email or password",
+                    "data": serializer.errors,
+                }
             )
+        email = serializer.data["email"]
+        password = serializer.data["password"]
+
+        user = get_if_exists(User, email=email)
+
+        if not user or not user.check_password(password) or user.is_dealer is False:
+            return Response({"msg": "Invaild email or password"})
+
+        if user.is_verified is False:
+            HandleEmail(user, "update").start()
+            return Response({"status": True, "email": serializer.data["email"]})
+
+        update_last_login(None, user)
+        response = Response()
+        tokens = get_tokens(user, "gas_dealer")
+        if request.data["platform"] == "web":
+            response.data = {"access": tokens["access"]}
+            response.set_cookie(
+                key="refresh",
+                value=tokens["refresh"],
+                httponly=True,
+                samesite="None",
+                secure=True,  # Use True in production with HTTPS
+            )
+        else:
+            response.data = tokens
+        return response
 
 
 @method_decorator(gzip_page, name="dispatch")
@@ -592,7 +557,7 @@ class GasDealerViewAPI(APIView):
                 )
             )
         except Exception:
-            return Response({"status": 400, "message": "Unauthenticated"})
+            return Response({"msg": "Unauthenticated"})
 
 
 @method_decorator(gzip_page, name="dispatch")
@@ -621,9 +586,7 @@ class GetGasDealerAPI(APIView):
                 )
             )
         except Exception:
-            return Response(
-                encrypt(json.dumps({"status": 400, "message": "Dealer is unavailable"}))
-            )
+            return Response(encrypt(json.dumps({"msg": "Dealer is unavailable"})))
 
 
 @method_decorator(gzip_page, name="dispatch")
@@ -634,15 +597,7 @@ class Update_GasDealer_details(APIView):
             gas_dealer = Gas_Dealer.objects.get(user=payload["id"])
 
             if not gas_dealer:
-                return Response(
-                    encrypt(
-                        json.dumps(
-                            {
-                                "status": 400,
-                            }
-                        )
-                    )
-                )
+                return Response(encrypt(json.dumps({})))
 
             # gas_dealer.selling = request.data.get('selling', gas_dealer.selling)
             gas_dealer.open = request.data.get("open", gas_dealer.open)

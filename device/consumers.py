@@ -1,7 +1,8 @@
 from .serializers import Gaschek_Device_Serializer
 from .models import Gaschek_Device
 from channels.generic.websocket import WebsocketConsumer
-from functions.encryption import auth_decoder, encrypt, decrypt
+from accounts.utils.auth_utils import jwt_required_ws
+from functions.encryption import encrypt, decrypt
 from dotenv import load_dotenv
 import random
 import string
@@ -22,19 +23,32 @@ from mqtt.models import Mqtt_Servers
 
 
 class ConsumersMixin:
-    def connect(self):
+    def socket_connect(self):
         token = self.scope["query_string"].decode("utf-8")
-        payload = auth_decoder(token)
+        payload = jwt_required_ws(token, "device")
         self.client_data = None
         self.client = None
         self.device_id = payload["device_id"]
-        self.user_id = self.get_device().user.id
+        # self.user_id = self.get_device().user.id
         self.client = self.connect_to_mqtt_broker(self.device_id)
 
-    def disconnect(self):
+    def socket_disconnect(self):
         if self.client:
             self.client.unsubscribe(self.device_id)
             self.client.loop_stop()
+
+    def socket_receive(self):
+        try:
+            if "action" in self.client_data:
+                if self.client_data["action"] == 0:
+                    self.receive_data_from_mqtt()
+                    self.send_data()
+                else:
+                    self.handle_client_action(self.client_data)
+            else:
+                self.handle_client_action(self.client_data)
+        except Exception:
+            self.error_msg()
 
     def get_device(self):
         return Gaschek_Device.objects.get(device_id=self.device_id)
@@ -46,8 +60,9 @@ class ConsumersMixin:
 
     def connect_to_mqtt_broker(self, topic):
         mqtt_server = Mqtt_Servers.objects.get(active=True)
+        self.mqtt_client_id = f"GasChek-client-{self.generate_random_text()}"
         client = mqtt_client.Client(
-            client_id=f"GasChek-client-{self.generate_random_text()}",
+            client_id=self.mqtt_client_id,
             userdata=None,
             protocol=mqtt_client.MQTTv5,
             callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2,
@@ -61,6 +76,7 @@ class ConsumersMixin:
     def publish_data_to_mqtt(self, device):
         payload = json.dumps(
             {
+                "client_id": self.mqtt_client_id,
                 "cylinder": str(device.cylinder),
                 "alarm": device.alarm,
                 "call": device.call,
@@ -77,7 +93,7 @@ class ConsumersMixin:
     def receive_data_from_mqtt(self):
         def on_connect(client, userdata, flags, reason_code, properties):
             if reason_code == 0:
-                print(f"Connected to MQTT Broker! : {reason_code}")
+                print(f"Connected to MQTT Broker | {reason_code} | {self.device_id}")
             else:
                 print(
                     f"Failed to connect, return code: {reason_code}",
@@ -85,18 +101,23 @@ class ConsumersMixin:
 
         def on_message(client, userdata, msg):
             device_data = json.loads(msg.payload.decode("utf-8"))
+            print(device_data)
             if "gas_mass" in device_data:
-                device = super().get_device()
+                device = self.get_device()
                 # device.cylinder = device_data["cylinder"]
-                device.cylinder = 12.5
+                # device.cylinder = 12.5
                 device.gas_mass = device_data["gas_mass"]
                 device.gas_level = device_data["gas_level"]
                 device.battery_level = device_data["battery_level"]
                 device.indicator = device_data["indicator"]
                 device.device_update_time = timezone.now()
                 device.save()
+                self.send_data()
 
-            self.send_data()
+            if ("client_id" in device_data) and (
+                device_data["client_id"] != self.mqtt_client_id
+            ):
+                self.send_data()
 
         self.client.on_connect = on_connect
         self.client.on_message = on_message
@@ -119,74 +140,41 @@ class ConsumersMixin:
                     attribute,
                     "off" if getattr(device, attribute) == "on" else "on",
                 )
-                device.save()
         elif "cylinder" in client_data:
             device.cylinder = client_data["cylinder"]
-            device.save()
         else:
             numbers = client_data["numbers"]
             device.country_code = numbers["country_code"]
             device.phonenumber_one = numbers["number_one"]
             device.phonenumber_two = numbers["number_two"]
             device.phonenumber_three = numbers["number_three"]
-            device.save()
+        device.save()
+        self.send_data()
         self.publish_data_to_mqtt(device)
 
 
 class GasDetailsConsumerWeb(ConsumersMixin, WebsocketConsumer):
     def connect(self):
-        try:
-            super().connect()
-            self.accept()
-        except Exception:
-            self.close()
+        super().socket_connect()
+        self.accept()
 
     def disconnect(self, close_code):
-        super().disconnect()
+        super().socket_disconnect()
 
     def receive(self, bytes_data):
-        try:
-            convert_byte_to_text = bytes_data.decode("utf-8")
-            decrypted_text_data = decrypt(convert_byte_to_text)
-            self.client_data = json.loads(decrypted_text_data)
+        convert_byte_to_text = bytes_data.decode("utf-8")
+        decrypted_text_data = decrypt(convert_byte_to_text)
+        self.client_data = json.loads(decrypted_text_data)
+        super().socket_receive()
 
-            if "action" in self.client_data:
-                if self.client_data["action"] == 0:
-                    super().receive_data_from_mqtt()
-                    self.send_data()
-                else:
-                    self.handle_client_action(self.client_data)
-            else:
-                self.handle_client_action(self.client_data)
-
-        except Exception:
-            self.send(bytes_data=encrypt(json.dumps({"msg": 400})).encode("utf-8"))
+    def error_msg(self):
+        self.send(bytes_data=encrypt(json.dumps({"msg": 400})).encode("utf-8"))
 
     def send_data(self):
         serializer = Gaschek_Device_Serializer(super().get_device())
         encrypted_data = encrypt(json.dumps(serializer.data))
         data = encrypt(json.dumps({"msg": encrypted_data})).encode("utf-8")
         self.send(bytes_data=data)
-
-    def device_save(self, instance, **kwargs):
-        pass
-        # if instance.device_id == self.device_id:
-        #     self.send_data()
-
-    def user_save(self, instance, **kwargs):
-        pass
-        # if (instance.id == self.user_id):
-        #    self.publish_data_to_mqtt()
-
-    def disconnect_signals(self):
-        pass
-        # post_save.disconnect(self.device_save, sender=Gaschek_Device)
-        # post_save.disconnect(self.user_save, sender=User)
-
-    def setup_signals(self):
-        pass
-        # post_save.connect(self.device_save, sender=Gaschek_Device, weak=False)
-        # post_save.connect(self.user_save, sender=User, weak=False)
 
     def handle_client_action(self, client_data):
         try:
@@ -198,58 +186,25 @@ class GasDetailsConsumerWeb(ConsumersMixin, WebsocketConsumer):
 
 class GasDetailsConsumerMobile(ConsumersMixin, WebsocketConsumer):
     def connect(self):
-        try:
-            super().connect()
-            self.accept()
-        except Exception:
-            self.close()
+        super().socket_connect()
+        self.accept()
 
     def disconnect(self, close_code):
-        super().disconnect()
+        super().socket_disconnect()
 
     def receive(self, text_data):
-        try:
-            decrypted_text_data = decrypt(text_data)
-            self.client_data = json.loads(decrypted_text_data)
+        decrypted_text_data = decrypt(text_data)
+        self.client_data = json.loads(decrypted_text_data)
+        super().socket_receive()
 
-            if "action" in self.client_data:
-                print(self.client_data)
-                if self.client_data["action"] == 0:
-                    super().receive_data_from_mqtt()
-                    self.send_data()
-                else:
-                    self.handle_client_action(self.client_data)
-            else:
-                self.handle_client_action(self.client_data)
-
-        except Exception:
-            self.send(encrypt(json.dumps({"msg": 400})))
+    def error_msg(self):
+        self.send(encrypt(json.dumps({"msg": 400})))
 
     def send_data(self):
         serializer = Gaschek_Device_Serializer(super().get_device())
         encrypted_data = encrypt(json.dumps(serializer.data))
         data = encrypt(json.dumps({"msg": encrypted_data}))
         self.send(data)
-
-    def device_save(self, instance, **kwargs):
-        pass
-        # if instance.device_id == self.device_id:
-        #    self.send_data()
-
-    def user_save(self, instance, **kwargs):
-        pass
-        # if (instance.id == self.user_id):
-        #    self.publish_data_to_mqtt()
-
-    def disconnect_signals(self):
-        pass
-        # post_save.disconnect(self.device_save, sender=Gaschek_Device)
-        # post_save.disconnect(self.user_save, sender=User)
-
-    def setup_signals(self):
-        pass
-        # post_save.connect(self.device_save, sender=Gaschek_Device, weak=False)
-        # post_save.connect(self.user_save, sender=User, weak=False)
 
     def handle_client_action(self, client_data):
         try:

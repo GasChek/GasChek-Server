@@ -175,18 +175,13 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 22,
 }
 
-# CORS_ALLOWED_ORIGINS = [
-#     'http://localhost:3000',
-#     'http://localhost:3001',
-#     'https://gaschek.netlify.app',
-#     'https://gaschekadmin.netlify.app',
-#     'http://192.168.43.152:8000',
-#     'http://192.168.43.152:3000',
-#     'https://strangely-cheerful-lion.ngrok-free.app',
-#     'http://172.20.10.3:8000',
-#     "exp+gaschek://expo-development-client"
-# ]
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    # 'https://gaschek.netlify.app',
+    # 'https://gaschekadmin.netlify.app',
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 PAYSTACK_SAFE_IPS = [
     # Paystack
@@ -194,8 +189,8 @@ PAYSTACK_SAFE_IPS = [
     "52.49.173.169",
     "52.214.14.220",
 ]
-CORS_ORIGIN_WHITELIST = ["https://gaschek.netlify.app", "http://192.168.43.152:8000"]
-CSRF_TRUSTED_ORIGINS = ["https://gaschek.herokuapp.com", "http://192.168.43.152:8000"]
+CORS_ORIGIN_WHITELIST = ["https://gaschek.netlify.app", "http://localhost:3000"]
+CSRF_TRUSTED_ORIGINS = ["https://gaschek.herokuapp.com", "http://localhost:8000"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # SECURE_SSL_REDIRECT = True
 
@@ -208,47 +203,5 @@ EMAIL_HOST_PASSWORD = "wpjzmukkuxrrgmcn"
 EMAIL_USE_SSL = True
 
 
-# prod_db = dj_database_url.config(conn_max_age=500)
-# DATABASES['default'].update(prod_db)
-
-
-# REDIS CONFIGURATIONS
-# REDIS_HOST = 'localhost'
-# REDIS_PORT = 6379
-# REDIS_DB = 0
-
-# Configure Django to use Redis as a message broker
-# CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'
-# CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'
-# CELERY_TASK_SERIALIZER = 'json'
-# CELERY_RESULT_SERIALIZER = 'json'
-# CELERY_ACCEPT_CONTENT = ['json', 'yaml']
-
-# Configure Django to use Redis as a cache backend
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django_redis.cache.RedisCache',
-#         'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}',
-#         'OPTIONS': {
-#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-#         }
-#     }
-# }
-# List of modules to import when celery starts.
-# CELERY_IMPORTS = (
-#     'gaschek_server.tasks',
-# )
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.11/howto/static-files/
-# PROJECT_ROOT   =   os.path.join(os.path.abspath(__file__))
-# STATIC_ROOT  =   os.path.join(PROJECT_ROOT, 'staticfiles')
-# STATIC_URL = '/static/'
-
-# # Extra lookup directories for collectstatic to find static files
-# STATICFILES_DIRS = (
-#     os.path.join(PROJECT_ROOT, 'static'),
-# )
-
-# #  Add configuration for static files storage using whitenoise
-# STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
+STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "static")

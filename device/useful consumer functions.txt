@@ -1,0 +1,19 @@
+def device_save(self, instance, **kwargs):
+    pass
+    # if instance.device_id == self.device_id:
+    #    self.send_data()
+
+def user_save(self, instance, **kwargs):
+    pass
+    # if (instance.id == self.user_id):
+    #    self.publish_data_to_mqtt()
+
+def disconnect_signals(self):
+    pass
+    # post_save.disconnect(self.device_save, sender=Gaschek_Device)
+    # post_save.disconnect(self.user_save, sender=User)
+
+def setup_signals(self):
+    pass
+    # post_save.connect(self.device_save, sender=Gaschek_Device, weak=False)
+    # post_save.connect(self.user_save, sender=User, weak=False)
