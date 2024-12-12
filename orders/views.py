@@ -191,14 +191,15 @@ class Get_orders(APIView, LimitOffsetPagination):
     @method_decorator(jwt_required(token_type="access"))
     def post(self, request):
         try:
-            user = User.objects.get(id=request.request.payload["id"])
+            user = User.objects.get(id=request.payload["id"])
 
-            if not user.is_dealer is True:
+            if not user.is_dealer:
                 orders = Gas_orders.objects.filter(user=user).order_by("-created_at")
                 results = self.paginate_queryset(orders, request, view=self)
                 serializer = Order_Serializer(results, many=True)
                 return self.get_paginated_response(encrypt(json.dumps(serializer.data)))
             gas_dealer = Gas_Dealer.objects.get(user=user)
+
             orders = Gas_orders.objects.filter(gas_dealer=gas_dealer).order_by(
                 "-created_at"
             )

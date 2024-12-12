@@ -28,6 +28,7 @@ class ConsumersMixin:
         payload = jwt_required_ws(token, "device")
         self.client_data = None
         self.client = None
+        self.socket_type = None
         self.device_id = payload["device_id"]
         # self.user_id = self.get_device().user.id
         self.client = self.connect_to_mqtt_broker(self.device_id)
@@ -87,7 +88,7 @@ class ConsumersMixin:
                 "number_three": f"{device.country_code}{device.phonenumber_three}",
             }
         )
-        print("sending to mqtt")
+        # print("sending to mqtt")
         self.client.publish(self.device_id, payload=payload, qos=0)
 
     def receive_data_from_mqtt(self):
@@ -101,7 +102,7 @@ class ConsumersMixin:
 
         def on_message(client, userdata, msg):
             device_data = json.loads(msg.payload.decode("utf-8"))
-            print(device_data)
+            # print(device_data)
             if "gas_mass" in device_data:
                 device = self.get_device()
                 # device.cylinder = device_data["cylinder"]
@@ -124,33 +125,52 @@ class ConsumersMixin:
         self.client.loop_start()
 
     def handle_client_action(self, client_data):
-        device = self.get_device()
-        if "action" in client_data:
-            action_to_attribute = {
-                "a": "alarm",
-                "c": "call",
-                "t": "text",
-                "i": "indicator",
-            }
-            action = client_data["action"]
-            if action in action_to_attribute:
-                attribute = action_to_attribute[action]
-                setattr(
-                    device,
-                    attribute,
-                    "off" if getattr(device, attribute) == "on" else "on",
-                )
-        elif "cylinder" in client_data:
-            device.cylinder = client_data["cylinder"]
+        try:
+            device = self.get_device()
+            if "action" in client_data:
+                action_to_attribute = {
+                    "a": "alarm",
+                    "c": "call",
+                    "t": "text",
+                    "i": "indicator",
+                }
+                action = client_data["action"]
+                if action in action_to_attribute:
+                    attribute = action_to_attribute[action]
+                    setattr(
+                        device,
+                        attribute,
+                        "off" if getattr(device, attribute) == "on" else "on",
+                    )
+            elif "cylinder" in client_data:
+                device.cylinder = client_data["cylinder"]
+            else:
+                numbers = client_data["numbers"]
+                device.country_code = numbers["country_code"]
+                device.phonenumber_one = numbers["number_one"]
+                device.phonenumber_two = numbers["number_two"]
+                device.phonenumber_three = numbers["number_three"]
+            device.save()
+            self.send_data()
+            self.publish_data_to_mqtt(device)
+        except Exception as e:
+            print(e)
+            self.error_msg()
+
+    def encrypt_and_send(self, data):
+        encrypted_data = encrypt(json.dumps(data))
+        if self.socket_type == "web":
+            self.send(bytes_data=encrypted_data.encode("utf-8"))
         else:
-            numbers = client_data["numbers"]
-            device.country_code = numbers["country_code"]
-            device.phonenumber_one = numbers["number_one"]
-            device.phonenumber_two = numbers["number_two"]
-            device.phonenumber_three = numbers["number_three"]
-        device.save()
-        self.send_data()
-        self.publish_data_to_mqtt(device)
+            self.send(encrypted_data)
+
+    def error_msg(self):
+        self.encrypt_and_send({"msg": 400})
+
+    def send_data(self):
+        serializer = Gaschek_Device_Serializer(self.get_device())
+        encrypted_data = encrypt(json.dumps(serializer.data))
+        self.encrypt_and_send({"msg": encrypted_data})
 
 
 class GasDetailsConsumerWeb(ConsumersMixin, WebsocketConsumer):
@@ -165,23 +185,8 @@ class GasDetailsConsumerWeb(ConsumersMixin, WebsocketConsumer):
         convert_byte_to_text = bytes_data.decode("utf-8")
         decrypted_text_data = decrypt(convert_byte_to_text)
         self.client_data = json.loads(decrypted_text_data)
+        self.socket_type = "web"
         super().socket_receive()
-
-    def error_msg(self):
-        self.send(bytes_data=encrypt(json.dumps({"msg": 400})).encode("utf-8"))
-
-    def send_data(self):
-        serializer = Gaschek_Device_Serializer(super().get_device())
-        encrypted_data = encrypt(json.dumps(serializer.data))
-        data = encrypt(json.dumps({"msg": encrypted_data})).encode("utf-8")
-        self.send(bytes_data=data)
-
-    def handle_client_action(self, client_data):
-        try:
-            super().handle_client_action(client_data)
-        except Exception as e:
-            print(e)
-            self.send(bytes_data=encrypt(json.dumps({"msg": 400})).encode("utf-8"))
 
 
 class GasDetailsConsumerMobile(ConsumersMixin, WebsocketConsumer):
@@ -195,20 +200,5 @@ class GasDetailsConsumerMobile(ConsumersMixin, WebsocketConsumer):
     def receive(self, text_data):
         decrypted_text_data = decrypt(text_data)
         self.client_data = json.loads(decrypted_text_data)
+        self.socket_type = "mobile"
         super().socket_receive()
-
-    def error_msg(self):
-        self.send(encrypt(json.dumps({"msg": 400})))
-
-    def send_data(self):
-        serializer = Gaschek_Device_Serializer(super().get_device())
-        encrypted_data = encrypt(json.dumps(serializer.data))
-        data = encrypt(json.dumps({"msg": encrypted_data}))
-        self.send(data)
-
-    def handle_client_action(self, client_data):
-        try:
-            super().handle_client_action(client_data)
-        except Exception as e:
-            print(e)
-            self.send(encrypt(json.dumps({"msg": 400})))

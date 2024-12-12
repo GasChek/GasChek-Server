@@ -80,7 +80,7 @@ class SignUpAPI(APIView):
                 )
             )
         )
-        
+
 
 @method_decorator(gzip_page, name="dispatch")
 class VerifyOTP(APIView):
@@ -131,6 +131,7 @@ class VerifyOTP(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+
 @method_decorator(gzip_page, name="dispatch")
 class Resend_Otp(APIView):
     def post(self, request):
@@ -141,6 +142,7 @@ class Resend_Otp(APIView):
                 "token": generate_auth_token(user, "verification", "user"),
             }
         )
+
 
 @method_decorator(gzip_page, name="dispatch")
 class LoginAPI(APIView):
@@ -164,6 +166,7 @@ class LoginAPI(APIView):
             return self.error_res()
 
         if user.is_verified is False:
+            HandleEmail(user, "update").start()
             return Response(
                 {
                     "token": generate_auth_token(user, "verification", "user"),
@@ -464,37 +467,6 @@ class CreateGasDealerAPI(APIView):
             }
         )
 
-
-@method_decorator(gzip_page, name="dispatch")
-class Verify_Otp(APIView):
-    def post(self, request):
-        payload = auth_decoder(request.META.get("HTTP_AUTHORIZATION"))
-        user = get_if_exists(User, id=payload["id"])
-        if not user or user.is_verified is True:
-            return Response({"msg": "Invaild email"})
-
-        token = get_if_exists(Token, user=user)
-        if not token:
-            return Response({"msg": "Invaild email"})
-
-        if token.otp != request.data["otp"]:
-            return Response({"msg": "Invaild otp"})
-
-        response = {}
-        response["status"] = 200
-
-        if user.is_dealer:
-            gas_dealer = Gas_Dealer.objects.get(user=user)
-            user.is_verified = True
-            gas_dealer.is_verified = True
-            user.save()
-            gas_dealer.save()
-            response["type"] = "dealer"
-        else:
-            user.is_verified = True
-            user.save()
-            response["type"] = "user"
-        return Response(response)
 
 @method_decorator(gzip_page, name="dispatch")
 class Dealer_LoginAPI(APIView):

@@ -33,6 +33,7 @@ ALLOWED_HOSTS = [
     "172.20.10.3",
     "strangely-cheerful-lion.ngrok-free.app",
     "172.20.10.3",
+    "192.168.18.11",
 ]
 
 # Application definition
@@ -177,6 +178,7 @@ REST_FRAMEWORK = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://192.168.18.11:3000",
     # 'https://gaschek.netlify.app',
     # 'https://gaschekadmin.netlify.app',
 ]

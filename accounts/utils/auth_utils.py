@@ -6,7 +6,8 @@ from django.http import JsonResponse
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from functions.encryption import encrypt, decrypt
-
+from asgiref.sync import sync_to_async
+import json
 
 load_dotenv()
 
@@ -68,7 +69,7 @@ def auth_decoder(token, action):
         )
         return payload
 
-    except (binascii.Error, DecodeError) as e:
+    except (binascii.Error, DecodeError, ValueError) as e:
         print("Failed to decode JWT due to incorrect padding or other errors:", str(e))
         return None
     except jwt.ExpiredSignatureError:
@@ -77,32 +78,65 @@ def auth_decoder(token, action):
         return None
 
 
-def jwt_required(token_type):
+def jwt_required(token_type, partial=False, async_view=False):
     def decorator(view_func):
-        def wrapped_view(request, *args, **kwargs):
-            if token_type == "refresh" and request.data["platform"] == "web":
-                token = request.COOKIES.get("refresh")  # Extract token from cookie
-            else:
-                token = request.META.get("HTTP_AUTHORIZATION")
+        def get_request_data(request):
+            if async_view:
+                return json.loads(request.body.decode("utf-8"))
+            return request.data
 
+        def get_token(request):
+            # Determine where to retrieve the token from
+            if token_type == "refresh":
+                request_data = get_request_data(request)
+
+                if request_data["platform"] == "web":
+                    return request.COOKIES.get("refresh")
+                return request.META.get("HTTP_AUTHORIZATION")
+            return request.META.get("HTTP_AUTHORIZATION")
+
+        def handle_auth(request, token):
+            # Allow access without token if partial=True
+            if partial and token is None:
+                request.payload = None
+                return True, None
+
+            # Check if the token is missing
             if not token:
-                return JsonResponse({"msg": "Invalid auth"}, status=403)
+                return False, JsonResponse({"msg": "Invalid auth"}, status=403)
 
+            # Decode the token
             payload = auth_decoder(token, token_type)
-            if payload is None:
-                response_data = {"msg": "Invalid auth"}
-                response = JsonResponse(response_data, status=403)
-                if token_type == "refresh" and request.data["platform"] == "web":
-                    response.delete_cookie("refresh")
-                return response
+            if payload is None:  # Token is invalid or expired
+                response = JsonResponse({"msg": "Invalid auth"}, status=403)
 
+                if token_type == "refresh":
+                    request_data = get_request_data(request)
+
+                    if request_data["platform"] == "web":
+                        response.delete_cookie("refresh")
+                    return False, response
+                return False, response
+
+            # Check if token type matches
             if payload["type"] != token_type:
-                return JsonResponse({"msg": "Invalid auth"}, status=403)
+                return False, JsonResponse({"msg": "Invalid auth"}, status=403)
 
+            # Attach payload to request
             request.payload = payload
-            return view_func(request, *args, **kwargs)
+            return True, None
 
-        return wrapped_view
+        def sync_wrapped_view(request, *args, **kwargs):
+            token = get_token(request)
+            is_valid, response = handle_auth(request, token)
+            return view_func(request, *args, **kwargs) if is_valid else response
+
+        async def async_wrapped_view(request, *args, **kwargs):
+            token = await sync_to_async(get_token)(request)
+            is_valid, response = await sync_to_async(handle_auth)(request, token)
+            return await view_func(request, *args, **kwargs) if is_valid else response
+
+        return async_wrapped_view if async_view else sync_wrapped_view
 
     return decorator
 
