@@ -63,7 +63,7 @@ INSTALLED_APPS = [
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(
     BASE_DIR, "google-credentials.json"
 )
-os.environ["GOOGLE_CLOUD_PROJECT"] = "gaschek-f7ed0"
+os.environ["GOOGLE_CLOUD_PROJECT"] = os.getenv("GOOGLE_CLOUD_PROJECT"),
 FIREBASE_APP = initialize_app()
 FCM_DJANGO_SETTINGS = {
     # an instance of firebase_admin.App to be used as default for all fcm-django requests
