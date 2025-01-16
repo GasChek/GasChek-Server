@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Gas_orders 
+from .models import Gas_orders
 from accounts.models import Cylinder_Price, Delivery_Fee
 
 # Register your models here.

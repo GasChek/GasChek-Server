@@ -7,4 +7,3 @@ class ServerNameMiddleware:
         response = self.get_response(request)
         response["Server"] = self.server_header
         return response
-    
